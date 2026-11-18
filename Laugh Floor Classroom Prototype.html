@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Laugh Floor Classroom Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+
+      :root {
+        --panel-bg: #fdf6ec;
+        --panel-card: #ffffff;
+        --panel-ink: #2b2118;
+        --panel-ink-soft: #6b5d4f;
+        --panel-line: #e8dcc8;
+        --accent: #e4572e;
+        --accent-ink: #ffffff;
+        --accent2: #0e7c86;
+        --accent2-soft: #e2f2f3;
+        --chip-bg: #fff3df;
+        --chip-line: #f0d9ae;
+        --good: #1e9e62;
+        --stage-bg: #101d2e;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --panel-bg: #1d1712;
+          --panel-card: #2a211a;
+          --panel-ink: #f7ecdd;
+          --panel-ink-soft: #c9b8a4;
+          --panel-line: #463829;
+          --accent2-soft: #173a3e;
+          --chip-bg: #38291a;
+          --chip-line: #5a422a;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Nunito", system-ui, sans-serif;
+        background: var(--panel-bg);
+        color: var(--panel-ink);
+        -webkit-tap-highlight-color: transparent;
+      }
+      h1, h2, .display { font-family: "Baloo 2", "Nunito", system-ui, sans-serif; }
+
+      /* ---------- top bar ---------- */
+      .topbar {
+        display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+        padding: .6rem .9rem;
+      }
+      .topbar .spacer { flex: 1; }
+      .view-switch { display: inline-flex; background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 999px; padding: 3px; gap: 2px; }
+      .view-switch button {
+        border: 0; background: transparent; color: var(--panel-ink-soft);
+        font: 700 .85rem "Nunito", sans-serif; padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+      }
+      .view-switch button[aria-pressed="true"] { background: var(--accent2); color: #fff; }
+      .ghost-btn {
+        border: 2px solid var(--panel-line); background: var(--panel-card); color: var(--panel-ink);
+        font: 700 .85rem "Nunito", sans-serif; padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+      }
+
+      /* ---------- layout ---------- */
+      .layout {
+        display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 430px);
+        gap: 1rem; padding: 0 1rem 1.2rem; align-items: start;
+        max-width: 1600px; margin: 0 auto;
+      }
+      .stage-wrap, .panel { min-width: 0; }
+      body[data-view="stage"] .layout { grid-template-columns: minmax(0, 1fr); }
+      body[data-view="stage"] .panel { display: none; }
+      body[data-view="controls"] .stage-wrap { display: none; }
+      body[data-view="controls"] .layout { grid-template-columns: minmax(0, 640px); justify-content: center; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: minmax(0, 1fr); }
+      }
+
+      /* ---------- stage ---------- */
+      .stage-wrap { position: sticky; top: .6rem; }
+      @media (max-width: 900px) {
+        .stage-wrap { position: static; }
+        .stage { min-height: min(64vh, 540px); }
+      }
+      @media (max-width: 600px) {
+        .curtain { width: 30px; }
+        .valance { height: 26px; }
+        .bubble { top: 40px; }
+      }
+      .stage {
+        position: relative; overflow: hidden; border-radius: 26px;
+        background:
+          radial-gradient(ellipse 62% 46% at 50% 30%, rgba(255, 214, 130, .34), rgba(255, 214, 130, 0) 70%),
+          radial-gradient(ellipse 120% 90% at 50% 0%, #274b63 0%, var(--stage-bg) 62%);
+        min-height: min(78vh, 720px);
+        display: flex; align-items: flex-end; justify-content: center;
+        box-shadow: 0 18px 40px rgba(16, 29, 46, .35);
+      }
+      .curtain { position: absolute; top: 0; bottom: 0; width: 54px; z-index: 3; pointer-events: none;
+        background: repeating-linear-gradient(90deg, #a31621 0 12px, #c1272d 12px 22px, #7e1019 22px 34px);
+        box-shadow: inset -14px 0 22px rgba(0,0,0,.35);
+      }
+      .curtain.left { left: 0; border-radius: 0 0 18px 0; }
+      .curtain.right { right: 0; transform: scaleX(-1); border-radius: 0 0 18px 0; }
+      .valance { position: absolute; top: 0; left: 0; right: 0; height: 34px; z-index: 4; pointer-events: none;
+        background: repeating-linear-gradient(90deg, #a31621 0 26px, #c1272d 26px 48px, #7e1019 48px 70px);
+        -webkit-mask: radial-gradient(circle 17px at 17px 0, transparent 16px, #000 17px) 0 0 / 44px 34px repeat-x;
+                mask: radial-gradient(circle 17px at 17px 0, transparent 16px, #000 17px) 0 0 / 44px 34px repeat-x;
+        opacity: .95;
+      }
+      .floor {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 15%; z-index: 1;
+        background: repeating-linear-gradient(90deg, #6b4423 0 64px, #7d5128 64px 128px);
+        border-top: 6px solid #54331a;
+        transform: perspective(300px) rotateX(24deg); transform-origin: bottom;
+      }
+      .spot-pool {
+        position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%);
+        width: 62%; height: 60px; border-radius: 50%; z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(255, 220, 150, .5), rgba(255, 220, 150, 0) 70%);
+      }
+      .bubble {
+        position: absolute; top: 52px; left: 50%; transform: translateX(-50%) scale(.8);
+        z-index: 6; max-width: min(78%, 460px);
+        background: #fffdf7; color: #2b2118; border: 3px solid #2b2118; border-radius: 20px;
+        font: 700 clamp(1rem, 2.4vw, 1.45rem)/1.25 "Baloo 2", sans-serif; text-align: center;
+        padding: .55rem 1rem; opacity: 0; transition: opacity .18s ease, transform .18s ease; pointer-events: none;
+      }
+      .bubble::after {
+        content: ""; position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%);
+        border: 8px solid transparent; border-top: 10px solid #2b2118; border-bottom: 0;
+      }
+      .bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+      .bubble.big-q { font-size: clamp(2rem, 6vw, 3.4rem); padding: .1rem 1.1rem; }
+
+      .char-zone { position: relative; z-index: 2; width: min(88%, 520px); margin-bottom: 4.5%; }
+      .char-wrap { transform-origin: 50% 92%; animation: idleBob 3.2s ease-in-out infinite; }
+      .char-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+      @keyframes idleBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+      .char-wrap.anim-jump { animation: jumpA .72s cubic-bezier(.28,.84,.42,1); }
+      @keyframes jumpA { 0% { transform: translateY(0) scale(1,1); } 18% { transform: translateY(6px) scale(1.06,.9); } 48% { transform: translateY(-88px) scale(.97,1.05); } 78% { transform: translateY(4px) scale(1.05,.92); } 100% { transform: translateY(0) scale(1,1); } }
+      .char-wrap.anim-laugh { animation: laughA 1.5s ease-in-out; }
+      @keyframes laughA { 0%,100% { transform: rotate(0) translateY(0); } 15% { transform: rotate(-3.4deg) translateY(-9px); } 30% { transform: rotate(3.4deg) translateY(-4px); } 45% { transform: rotate(-3deg) translateY(-10px); } 60% { transform: rotate(3deg) translateY(-3px); } 78% { transform: rotate(-1.6deg) translateY(-6px); } }
+      .char-wrap.anim-dance { animation: danceA 2.8s ease-in-out; }
+      @keyframes danceA { 0%,100% { transform: translateX(0) rotate(0); } 12% { transform: translateX(-26px) rotate(-6deg) translateY(-10px); } 25% { transform: translateX(0) rotate(0) translateY(4px) scale(1.04,.94); } 37% { transform: translateX(26px) rotate(6deg) translateY(-10px); } 50% { transform: translateX(0) translateY(-16px); } 62% { transform: translateX(-26px) rotate(-6deg) translateY(-8px); } 75% { transform: translateX(0) translateY(4px) scale(1.04,.94); } 87% { transform: translateX(26px) rotate(6deg) translateY(-8px); } }
+      .char-wrap.anim-lean-l { animation: leanL 1.3s ease-in-out; }
+      @keyframes leanL { 0%,100% { transform: rotate(0); } 30%,70% { transform: rotate(-5deg) translateX(-10px); } }
+      .char-wrap.anim-lean-r { animation: leanR 1.3s ease-in-out; }
+      @keyframes leanR { 0%,100% { transform: rotate(0); } 30%,70% { transform: rotate(5deg) translateX(10px); } }
+      .char-wrap.anim-surprise { animation: surpriseA .8s ease; }
+      @keyframes surpriseA { 0% { transform: scale(1); } 35% { transform: scale(1.07) translateY(-14px); } 100% { transform: scale(1); } }
+
+      /* SVG part animation */
+      .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
+      @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.08); } }
+      svg[data-expr="sleepy"] .eye { animation: none; transform: scaleY(.14); }
+      svg[data-expr="surprised"] .eye { animation: none; transform: scaleY(1.12); }
+      .pupils { transition: transform .25s ease; }
+      svg[data-look="left"] .pupils { transform: translateX(-7px); }
+      svg[data-look="right"] .pupils { transform: translateX(7px); }
+      svg[data-expr="sleepy"] .pupils { transform: translateY(4px); }
+      #armR, #armL { transform-box: fill-box; transition: transform .3s ease; }
+      #armR { transform-origin: 12% 18%; }
+      #armL { transform-origin: 88% 18%; }
+      svg[data-arm="wave"] #armR { animation: waveA 1.5s ease-in-out; }
+      @keyframes waveA { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-128deg); } 40% { transform: rotate(-104deg); } 60% { transform: rotate(-132deg); } 80% { transform: rotate(-108deg); } }
+      svg[data-arm="pointL"] #armL { transform: rotate(96deg); }
+      svg[data-arm="pointR"] #armR { transform: rotate(-96deg); }
+      svg[data-arm="bothup"] #armL { transform: rotate(140deg); }
+      svg[data-arm="bothup"] #armR { transform: rotate(-140deg); }
+      svg[data-expr="sleepy"] #armL, svg[data-expr="sleepy"] #armR { transform: rotate(6deg); }
+      .brow { transition: transform .25s ease; transform-box: fill-box; transform-origin: center; }
+      svg[data-expr="confused"] #browL { transform: translateY(-7px) rotate(-10deg); }
+      svg[data-expr="confused"] #browR { transform: translateY(2px) rotate(8deg); }
+      svg[data-expr="sleepy"] .brow { transform: translateY(5px); }
+      svg[data-expr="surprised"] .brow { transform: translateY(-8px); }
+      svg[data-expr="laugh"] .eye { animation: none; transform: scaleY(.25); }
+
+      .zzz { position: absolute; top: 6%; right: 14%; z-index: 5; pointer-events: none; display: none; }
+      .zzz span { position: absolute; font: 800 1.6rem "Baloo 2", sans-serif; color: #bcd8ff; opacity: 0; animation: zFloat 2.6s ease-in-out infinite; }
+      .zzz span:nth-child(2) { left: 22px; top: -18px; font-size: 2.1rem; animation-delay: .8s; }
+      .zzz span:nth-child(3) { left: 50px; top: -44px; font-size: 2.7rem; animation-delay: 1.6s; }
+      @keyframes zFloat { 0% { opacity: 0; transform: translateY(10px) rotate(-6deg); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px) rotate(8deg); } }
+      .stage[data-state="sleepy"] .zzz { display: block; }
+
+      .notes { position: absolute; inset: 0; z-index: 4; pointer-events: none; display: none; }
+      .notes span { position: absolute; font: 800 2rem "Baloo 2", sans-serif; color: #ffd166; opacity: 0; animation: noteFloat 2.6s ease-out infinite; }
+      .notes span:nth-child(1) { left: 16%; top: 34%; }
+      .notes span:nth-child(2) { right: 15%; top: 26%; animation-delay: .6s; color: #ff8fa3; }
+      .notes span:nth-child(3) { left: 24%; top: 16%; animation-delay: 1.2s; color: #8be0d4; }
+      .notes span:nth-child(4) { right: 24%; top: 44%; animation-delay: 1.7s; }
+      @keyframes noteFloat { 0% { opacity: 0; transform: translateY(14px) rotate(-8deg) scale(.8); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-42px) rotate(10deg) scale(1.1); } }
+      .stage[data-state="dance"] .notes { display: block; }
+
+      .stage-caption { margin: .55rem .2rem 0; color: var(--panel-ink-soft); font-size: .9rem; font-weight: 600; }
+      body[data-view="stage"] .stage-caption { display: none; }
+
+      /* ---------- control panel ---------- */
+      .panel { display: flex; flex-direction: column; gap: 1rem; }
+      .card {
+        background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 20px;
+        padding: 1rem 1.05rem 1.1rem;
+      }
+      .card h2 { margin: 0 0 .15rem; font-size: 1.3rem; font-weight: 800; letter-spacing: .01em; }
+      .card .hint { margin: 0 0 .8rem; color: var(--panel-ink-soft); font-size: .9rem; font-weight: 600; }
+      .grid-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; }
+      @media (max-width: 420px) { .grid-actions { grid-template-columns: repeat(2, 1fr); } }
+      .act-btn {
+        border: 2px solid var(--chip-line); background: var(--chip-bg); color: var(--panel-ink);
+        border-radius: 16px; padding: .6rem .3rem .5rem; cursor: pointer;
+        font: 700 .92rem/1.15 "Baloo 2", sans-serif; display: flex; flex-direction: column; align-items: center; gap: .3rem;
+        min-height: 4.4rem; justify-content: center;
+      }
+      .act-btn svg { width: 26px; height: 26px; }
+      .act-btn:active { transform: scale(.95); }
+      .act-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+      .seg { display: flex; flex-wrap: wrap; gap: .45rem; }
+      .seg button {
+        border: 2px solid var(--panel-line); background: var(--panel-card); color: var(--panel-ink);
+        border-radius: 999px; padding: .45rem .9rem; cursor: pointer; font: 800 .9rem "Nunito", sans-serif;
+      }
+      .seg button[aria-pressed="true"] { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+      .mic-row { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+      .mic-btn {
+        border: 0; border-radius: 999px; padding: .65rem 1.3rem; cursor: pointer;
+        background: var(--accent); color: #fff; font: 800 1rem "Baloo 2", sans-serif;
+      }
+      .mic-btn.live { background: var(--good); }
+      .mic-status { font-weight: 700; font-size: .9rem; color: var(--panel-ink-soft); }
+      .meter { height: 16px; border-radius: 999px; background: var(--accent2-soft); overflow: hidden; margin: .7rem 0 .2rem; border: 1px solid var(--panel-line); }
+      .meter > div { height: 100%; width: 0%; background: linear-gradient(90deg, #35c48d, #ffd166 70%, #e4572e); transition: width .06s linear; border-radius: 999px; }
+      .slider-row { display: flex; align-items: center; gap: .6rem; margin-top: .55rem; font-weight: 700; font-size: .9rem; color: var(--panel-ink-soft); }
+      .slider-row input[type="range"] { flex: 1; accent-color: var(--accent2); min-height: 2.25rem; }
+
+      .phrase-grid { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .7rem; }
+      .phrase {
+        border: 2px solid var(--chip-line); background: var(--chip-bg); color: var(--panel-ink);
+        border-radius: 999px; padding: .45rem .85rem; cursor: pointer; font: 700 .9rem "Nunito", sans-serif;
+      }
+      .phrase:active { transform: scale(.96); }
+      .speak-row { display: flex; gap: .5rem; }
+      .speak-row input {
+        flex: 1; min-width: 0; border: 2px solid var(--panel-line); border-radius: 12px; padding: .5rem .7rem;
+        font: 600 1rem "Nunito", sans-serif; background: var(--panel-card); color: var(--panel-ink);
+      }
+      .speak-btn {
+        border: 0; border-radius: 12px; padding: .5rem 1.1rem; cursor: pointer;
+        background: var(--accent2); color: #fff; font: 800 1rem "Baloo 2", sans-serif; white-space: nowrap;
+      }
+      .sfx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .55rem; }
+      @media (max-width: 420px) { .sfx-grid { grid-template-columns: repeat(2, 1fr); } }
+      .sfx-btn {
+        border: 2px solid var(--panel-line); background: var(--accent2-soft); color: var(--panel-ink);
+        border-radius: 14px; padding: .55rem .2rem; cursor: pointer; font: 700 .92rem "Baloo 2", sans-serif; min-height: 3rem;
+      }
+      .sfx-btn:active { transform: scale(.95); }
+
+      details.help { background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 20px; padding: .4rem 1.05rem; }
+      details.help summary { font: 800 1.05rem "Baloo 2", sans-serif; cursor: pointer; padding: .55rem 0; }
+      details.help ol, details.help ul { margin: .3rem 0 .9rem; padding-left: 1.25rem; }
+      details.help li { margin: .35rem 0; font-size: .95rem; line-height: 1.45; }
+      details.help p { font-size: .95rem; line-height: 1.45; }
+      kbd { background: var(--chip-bg); border: 1.5px solid var(--chip-line); border-bottom-width: 3px; border-radius: 6px; padding: 0 .35rem; font: 700 .85em "Nunito", sans-serif; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .char-wrap, .eye, .zzz span, .notes span { animation: none !important; }
+        * { transition: none !important; }
+      }
+    </style>
+  </head>
+  <body data-view="both">
+
+    <div class="topbar">
+      <div class="view-switch" role="group" aria-label="Choose what this screen shows">
+        <button type="button" data-setview="both" aria-pressed="true">Stage + Controls</button>
+        <button type="button" data-setview="stage" aria-pressed="false">Stage only</button>
+        <button type="button" data-setview="controls" aria-pressed="false">Controls only</button>
+      </div>
+      <div class="spacer"></div>
+      <button type="button" class="ghost-btn" id="fsBtn">Full screen</button>
+    </div>
+
+    <div class="layout">
+      <!-- ================= STAGE ================= -->
+      <div class="stage-wrap">
+        <div class="stage" id="stage" data-state="idle">
+          <div class="valance"></div>
+          <div class="curtain left"></div>
+          <div class="curtain right"></div>
+          <div class="floor"></div>
+          <div class="spot-pool"></div>
+          <div class="bubble" id="bubble" aria-live="polite"></div>
+          <div class="zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>
+          <div class="notes" aria-hidden="true"><span>♪</span><span>♫</span><span>♪</span><span>♫</span></div>
+
+          <div class="char-zone">
+            <div class="char-wrap" id="charWrap">
+              <svg id="giggles" viewBox="0 0 420 440" role="img" aria-label="Giggles, a friendly teal monster with orange horns" data-expr="smile" data-arm="rest" data-look="center">
+                <defs>
+                  <radialGradient id="bodyGrad" cx="42%" cy="30%" r="85%">
+                    <stop offset="0%" stop-color="#3fd0c2" />
+                    <stop offset="100%" stop-color="#12998c" />
+                  </radialGradient>
+                  <clipPath id="mouthClip"><path id="mouthClipPath" d="" /></clipPath>
+                </defs>
+
+                <ellipse cx="210" cy="410" rx="112" ry="14" fill="rgba(0,0,0,.28)" />
+
+                <!-- arms (behind body) -->
+                <g id="armL">
+                  <path d="M120 216 C 82 246, 62 278, 58 310" fill="none" stroke="#12998c" stroke-width="27" stroke-linecap="round" />
+                  <circle cx="58" cy="314" r="16" fill="#f4a259" />
+                </g>
+                <g id="armR">
+                  <path d="M300 216 C 338 246, 358 278, 362 310" fill="none" stroke="#12998c" stroke-width="27" stroke-linecap="round" />
+                  <circle cx="362" cy="314" r="16" fill="#f4a259" />
+                </g>
+
+                <!-- feet -->
+                <ellipse cx="152" cy="398" rx="34" ry="13" fill="#f4a259" />
+                <ellipse cx="268" cy="398" rx="34" ry="13" fill="#f4a259" />
+
+                <!-- body -->
+                <path d="M210 58 C 302 58 350 140 350 234 C 350 332 292 398 210 398 C 128 398 70 332 70 234 C 70 140 118 58 210 58 Z" fill="url(#bodyGrad)" />
+                <ellipse cx="210" cy="306" rx="86" ry="76" fill="#ffd9a0" opacity=".92" />
+                <circle cx="102" cy="180" r="11" fill="#0b6e64" opacity=".35" />
+                <circle cx="318" cy="196" r="9" fill="#0b6e64" opacity=".35" />
+                <circle cx="112" cy="286" r="8" fill="#0b6e64" opacity=".3" />
+
+                <!-- horns -->
+                <path d="M148 76 C 134 44 146 24 170 16 C 176 40 172 60 182 74 C 172 84 156 84 148 76 Z" fill="#f4a259" />
+                <path d="M272 76 C 286 44 274 24 250 16 C 244 40 248 60 238 74 C 248 84 264 84 272 76 Z" fill="#f4a259" />
+
+                <!-- brows -->
+                <path class="brow" id="browL" d="M138 104 Q 167 90 196 104" fill="none" stroke="#0b4f47" stroke-width="8" stroke-linecap="round" />
+                <path class="brow" id="browR" d="M224 104 Q 253 90 282 104" fill="none" stroke="#0b4f47" stroke-width="8" stroke-linecap="round" />
+
+                <!-- eyes -->
+                <g class="eye">
+                  <ellipse cx="167" cy="152" rx="31" ry="37" fill="#ffffff" />
+                  <g class="pupils">
+                    <circle cx="167" cy="158" r="14" fill="#22303c" />
+                    <circle cx="172" cy="152" r="5" fill="#ffffff" />
+                  </g>
+                </g>
+                <g class="eye">
+                  <ellipse cx="253" cy="152" rx="31" ry="37" fill="#ffffff" />
+                  <g class="pupils">
+                    <circle cx="253" cy="158" r="14" fill="#22303c" />
+                    <circle cx="258" cy="152" r="5" fill="#ffffff" />
+                  </g>
+                </g>
+
+                <!-- nose + cheeks -->
+                <ellipse cx="210" cy="208" rx="13" ry="10" fill="#f4a259" />
+                <circle cx="124" cy="228" r="15" fill="#ff9d9d" opacity=".5" />
+                <circle cx="296" cy="228" r="15" fill="#ff9d9d" opacity=".5" />
+
+                <!-- mouth -->
+                <path id="mouthPath" d="" fill="#7c2231" />
+                <g clip-path="url(#mouthClip)">
+                  <rect id="teeth" x="186" y="238" width="48" height="17" rx="6" fill="#ffffff" />
+                  <ellipse id="tongue" cx="210" cy="292" rx="26" ry="11" fill="#ef6f8b" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <p class="stage-caption">This is Giggles. Put this screen on the classroom board, tap a move, and watch — or use “Stage only” for a clean board view.</p>
+      </div>
+
+      <!-- ================= CONTROLS ================= -->
+      <div class="panel">
+        <section class="card" aria-labelledby="h-moves">
+          <h2 id="h-moves">Giggles' moves</h2>
+          <p class="hint">Big buttons, made for quick taps between questions.</p>
+          <div class="grid-actions">
+            <button type="button" class="act-btn" data-action="wave">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 11.5V6a1.5 1.5 0 0 1 3 0V5a1.5 1.5 0 0 1 3 0v-.5a1.5 1.5 0 0 1 3 0V6a1.5 1.5 0 0 1 3 0v6a7 7 0 0 1-7 7h-.6c-2.3 0-3.9-.9-5.2-2.7L3.6 13c-.6-.9-.4-1.9.3-2.4.7-.5 1.6-.3 2.2.5L7 12.5"/></svg>
+              Wave hello
+            </button>
+            <button type="button" class="act-btn" data-action="jump">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6"/><path d="M6 11l6-6 6 6"/><path d="M4 21h16" stroke-dasharray="2.5 3"/></svg>
+              Jump
+            </button>
+            <button type="button" class="act-btn" data-action="laugh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M7.5 13.5c1.2 2.4 2.7 3.5 4.5 3.5s3.3-1.1 4.5-3.5"/><path d="M8.5 9.2c.6-.7 1.4-.7 2 0M13.5 9.2c.6-.7 1.4-.7 2 0"/></svg>
+              Big laugh
+            </button>
+            <button type="button" class="act-btn" data-action="pointL">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12H8"/><path d="M13 6l-6 6 6 6"/></svg>
+              Point left
+            </button>
+            <button type="button" class="act-btn" data-action="pointR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h13"/><path d="M11 6l6 6-6 6"/></svg>
+              Point right
+            </button>
+            <button type="button" class="act-btn" data-action="smile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14c1.1 1.8 2.4 2.6 4 2.6s2.9-.8 4-2.6"/><circle cx="9" cy="9.5" r=".6" fill="currentColor"/><circle cx="15" cy="9.5" r=".6" fill="currentColor"/></svg>
+              Big smile
+            </button>
+            <button type="button" class="act-btn" data-action="dance">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l10-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
+              Dance
+            </button>
+            <button type="button" class="act-btn" data-action="confused">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3c.3-1 1.2-1.6 2.3-1.6 1.3 0 2.2.8 2.2 1.9 0 1.5-2 1.6-2 3"/><circle cx="12" cy="16.4" r=".6" fill="currentColor"/><path d="M8.5 18.2c1.2-.5 2.4-.5 3.5.2" transform="translate(2.5 -1.4)"/></svg>
+              Confused
+            </button>
+            <button type="button" class="act-btn" data-action="sleepy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.5A8.5 8.5 0 1 1 10.5 4 6.8 6.8 0 0 0 20 13.5Z"/></svg>
+              Sleepy
+            </button>
+            <button type="button" class="act-btn" data-action="surprise">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.8" r=".7" fill="currentColor"/><circle cx="15" cy="9.8" r=".7" fill="currentColor"/><ellipse cx="12" cy="15.8" rx="2" ry="2.6"/></svg>
+              Surprise!
+            </button>
+            <button type="button" class="act-btn" data-action="cheer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M5.6 5.6l2.1 2.1M18.4 5.6l-2.1 2.1"/><path d="M7 21v-6l5-4 5 4v6"/><path d="M10 21v-4h4v4"/></svg>
+              Cheer
+            </button>
+            <button type="button" class="act-btn primary" data-action="joke">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4Z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></svg>
+              Tell a joke
+            </button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-voice">
+          <h2 id="h-voice">Your voice, changed</h2>
+          <p class="hint">Talk into this device and Giggles answers in a funny voice — and his mouth moves with yours. Best with a small Bluetooth speaker near the board, kept a few feet from the mic so it doesn't squeal.</p>
+          <div class="mic-row">
+            <button type="button" class="mic-btn" id="micBtn">Start microphone</button>
+            <span class="mic-status" id="micStatus">Microphone is off</span>
+          </div>
+          <div class="meter" aria-hidden="true"><div id="meterFill"></div></div>
+          <div class="seg" role="group" aria-label="Funny voice" style="margin-top:.6rem">
+            <button type="button" data-voice="monster" aria-pressed="true">Monster</button>
+            <button type="button" data-voice="robot" aria-pressed="false">Robot</button>
+            <button type="button" data-voice="squeaky" aria-pressed="false">Squeaky</button>
+            <button type="button" data-voice="normal" aria-pressed="false">Just me</button>
+          </div>
+          <div class="slider-row">
+            <label for="sens">Mouth size</label>
+            <input type="range" id="sens" min="2" max="14" step="0.5" value="7" />
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-speak">
+          <h2 id="h-speak">No mic? Giggles can talk</h2>
+          <p class="hint">Tap a line, or type your own, and this device says it out loud in the voice picked above while Giggles lip-syncs along.</p>
+          <div class="phrase-grid" id="phraseGrid">
+            <button type="button" class="phrase">Hello, friends!</button>
+            <button type="button" class="phrase">Who has a joke for me?</button>
+            <button type="button" class="phrase">That was SO funny!</button>
+            <button type="button" class="phrase">Great job, everybody!</button>
+            <button type="button" class="phrase">Ooh, good question!</button>
+            <button type="button" class="phrase">Let's all wiggle!</button>
+          </div>
+          <div class="speak-row">
+            <input type="text" id="sayInput" placeholder="Type something for Giggles to say…" maxlength="140" />
+            <button type="button" class="speak-btn" id="sayBtn">Say it</button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-sfx">
+          <h2 id="h-sfx">Sound effects</h2>
+          <p class="hint">A little cartoon noise goes a long way with five-year-olds.</p>
+          <div class="sfx-grid">
+            <button type="button" class="sfx-btn" data-sfx="boing">Boing</button>
+            <button type="button" class="sfx-btn" data-sfx="giggle">Giggle</button>
+            <button type="button" class="sfx-btn" data-sfx="tada">Ta-dah!</button>
+            <button type="button" class="sfx-btn" data-sfx="drum">Drum sting</button>
+          </div>
+        </section>
+
+        <details class="help">
+          <summary>How to run it in the classroom</summary>
+          <ol>
+            <li><strong>Try it on one device first.</strong> This prototype puts the stage and the controls on the same screen, so you can test every move, the funny voice, and the lip sync on a single iPad or MacBook.</li>
+            <li><strong>On the big board:</strong> open this page, tap <em>Stage only</em>, then <em>Full screen</em>. Giggles fills the board with no buttons in the way.</li>
+            <li><strong>Voice:</strong> tap <em>Start microphone</em> and allow mic access. Your voice comes out of the same device's speaker in the funny voice you picked, and the louder you talk, the wider Giggles' mouth opens.</li>
+            <li><strong>Two screens:</strong> this prototype doesn't link two devices yet — that's the next step. It needs a free realtime go-between (like Firebase) so the iPad's taps reach the board in under a second. Until then, one device drives everything.</li>
+          </ol>
+          <p><strong>Keyboard shortcuts</strong> (handy on the MacBook): <kbd>1</kbd> wave, <kbd>2</kbd> jump, <kbd>3</kbd> laugh, <kbd>4</kbd>/<kbd>5</kbd> point, <kbd>6</kbd> smile, <kbd>7</kbd> dance, <kbd>8</kbd> confused, <kbd>9</kbd> sleepy, <kbd>0</kbd> surprise.</p>
+          <p><strong>If the voice squeals:</strong> move the speaker away from the iPad, turn the speaker down a little, or hold the iPad mic close and speak toward it.</p>
+        </details>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var svg = document.getElementById("giggles");
+        var stage = document.getElementById("stage");
+        var charWrap = document.getElementById("charWrap");
+        var bubble = document.getElementById("bubble");
+        var mouthPath = document.getElementById("mouthPath");
+        var mouthClipPath = document.getElementById("mouthClipPath");
+        var teeth = document.getElementById("teeth");
+        var tongue = document.getElementById("tongue");
+
+        /* ---------------- expression + mouth ---------------- */
+        var MOUTH_CX = 210, MOUTH_CY = 258;
+        var expr = "smile";           // smile | laugh | confused | sleepy | surprised
+        var exprSticky = false;
+        var exprUntil = 0;
+        var mouthOpen = 0.12;
+        var micLevel = 0;             // 0..1 from microphone
+        var speaking = false;         // TTS in progress
+        var bubbleTimer = null;
+
+        var BASE_OPEN = { smile: 0.12, laugh: 0.9, confused: 0.34, sleepy: 0.05, surprised: 0.55 };
+
+        function setExpr(name, ms, sticky) {
+          expr = name;
+          exprSticky = !!sticky;
+          exprUntil = ms ? performance.now() + ms : 0;
+          svg.setAttribute("data-expr", name);
+          stage.setAttribute("data-state", name === "sleepy" ? "sleepy" : (stage.getAttribute("data-state") === "dance" ? "dance" : "idle"));
+        }
+
+        function showBubble(text, ms, bigQ) {
+          bubble.textContent = text;
+          bubble.classList.toggle("big-q", !!bigQ);
+          bubble.classList.add("show");
+          if (bubbleTimer) clearTimeout(bubbleTimer);
+          if (ms !== 0) {
+            bubbleTimer = setTimeout(function () { bubble.classList.remove("show"); }, ms || 2600);
+          }
+        }
+        function hideBubble() { bubble.classList.remove("show"); }
+
+        function renderMouth(now) {
+          if (!exprSticky && exprUntil && now > exprUntil && expr !== "smile") {
+            setExpr("smile", 0);
+            svg.setAttribute("data-look", "center");
+          }
+          var target = BASE_OPEN[expr] || 0.12;
+          if (micLevel > target) target = micLevel;
+          if (speaking) {
+            var flap = Math.abs(Math.sin(now * 0.016)) * (0.45 + 0.35 * Math.sin(now * 0.0041 + 1.7));
+            flap = Math.max(0.08, Math.min(0.95, flap));
+            if (flap > target) target = flap;
+          }
+          mouthOpen += (target - mouthOpen) * 0.38;
+          if (mouthOpen < 0.01) mouthOpen = 0.01;
+
+          var w = expr === "confused" ? 20 + mouthOpen * 8 : 33 + mouthOpen * 9;
+          var h = 5 + mouthOpen * 40;
+          var lift = expr === "smile" ? -7 : (expr === "laugh" ? -4 : 0);
+          var topY = MOUTH_CY - h * 0.38;
+          var d = "M " + (MOUTH_CX - w) + " " + (MOUTH_CY + lift) +
+                  " Q " + MOUTH_CX + " " + (MOUTH_CY + h + 7) + " " + (MOUTH_CX + w) + " " + (MOUTH_CY + lift) +
+                  " Q " + MOUTH_CX + " " + topY + " " + (MOUTH_CX - w) + " " + (MOUTH_CY + lift) + " Z";
+          mouthPath.setAttribute("d", d);
+          mouthClipPath.setAttribute("d", d);
+          teeth.setAttribute("y", topY - 1);
+          teeth.setAttribute("x", MOUTH_CX - w * 0.72);
+          teeth.setAttribute("width", w * 1.44);
+          tongue.setAttribute("cy", MOUTH_CY + h * 0.6);
+          tongue.setAttribute("rx", w * 0.58);
+          tongue.setAttribute("ry", 3 + mouthOpen * 8);
+          tongue.setAttribute("opacity", mouthOpen > 0.22 ? "1" : "0");
+          requestAnimationFrame(renderMouth);
+        }
+        requestAnimationFrame(renderMouth);
+
+        /* ---------------- shared audio context ---------------- */
+        var actx = null;
+        function ensureCtx() {
+          if (!actx) {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) actx = new AC();
+          }
+          if (actx && actx.state === "suspended") actx.resume();
+          return actx;
+        }
+
+        /* ---------------- sound effects (synthesized) ---------------- */
+        function tone(freqA, freqB, t0, dur, type, vol) {
+          var o = actx.createOscillator(), g = actx.createGain();
+          o.type = type || "sine";
+          o.frequency.setValueAtTime(freqA, t0);
+          if (freqB) o.frequency.exponentialRampToValueAtTime(Math.max(30, freqB), t0 + dur);
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          o.connect(g); g.connect(actx.destination);
+          o.start(t0); o.stop(t0 + dur + 0.05);
+        }
+        function noiseBurst(t0, dur, vol, freq) {
+          var len = Math.floor(actx.sampleRate * dur);
+          var buf = actx.createBuffer(1, len, actx.sampleRate);
+          var data = buf.getChannelData(0);
+          for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+          var src = actx.createBufferSource(); src.buffer = buf;
+          var f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq || 1200; f.Q.value = 0.8;
+          var g = actx.createGain(); g.gain.value = vol;
+          src.connect(f); f.connect(g); g.connect(actx.destination);
+          src.start(t0);
+        }
+        var SFX = {
+          boing: function () { if (!ensureCtx()) return; var t = actx.currentTime; tone(320, 70, t, 0.5, "sine", 0.5); tone(640, 140, t, 0.5, "triangle", 0.18); },
+          giggle: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            for (var i = 0; i < 6; i++) {
+              var st = t + i * 0.13, f = 480 + Math.random() * 160;
+              tone(f, f * 0.82, st, 0.1, "sawtooth", 0.12);
+              tone(f * 2, f * 1.7, st, 0.08, "sine", 0.1);
+            }
+          },
+          tada: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            [523, 659, 784, 1047].forEach(function (f, i) { tone(f, null, t + i * 0.09, 0.34, "triangle", 0.3); });
+            tone(1319, null, t + 0.38, 0.5, "triangle", 0.22);
+          },
+          drum: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            for (var i = 0; i < 14; i++) noiseBurst(t + i * 0.055, 0.05, 0.16, 1800);
+            tone(196, null, t + 0.82, 0.3, "square", 0.16);
+            tone(147, null, t + 0.82, 0.36, "square", 0.16);
+            noiseBurst(t + 0.82, 0.3, 0.2, 5000);
+          }
+        };
+        document.querySelectorAll("[data-sfx]").forEach(function (btn) {
+          btn.addEventListener("click", function () { SFX[btn.getAttribute("data-sfx")](); });
+        });
+
+        /* ---------------- text to speech ---------------- */
+        var voiceMode = "monster";
+        var VOICE_TTS = {
+          monster: { pitch: 0.4, rate: 0.88 },
+          robot:   { pitch: 0.85, rate: 0.95 },
+          squeaky: { pitch: 1.9, rate: 1.08 },
+          normal:  { pitch: 1.1, rate: 1.0 }
+        };
+        function speak(text, after) {
+          showBubble(text, 0);
+          if (!("speechSynthesis" in window)) { hideBubble(); if (after) after(); return; }
+          window.speechSynthesis.cancel();
+          var u = new SpeechSynthesisUtterance(text);
+          var v = VOICE_TTS[voiceMode] || VOICE_TTS.monster;
+          u.pitch = v.pitch; u.rate = v.rate; u.volume = 1;
+          speaking = true;
+          var done = function () { speaking = false; hideBubble(); if (after) after(); };
+          u.onend = done;
+          u.onerror = done;
+          window.speechSynthesis.speak(u);
+          // safety: never leave the mouth flapping forever
+          setTimeout(function () { if (speaking && !window.speechSynthesis.speaking) { speaking = false; hideBubble(); } }, Math.max(2500, text.length * 220));
+        }
+
+        document.querySelectorAll("#phraseGrid .phrase").forEach(function (btn) {
+          btn.addEventListener("click", function () { ensureCtx(); speak(btn.textContent.trim()); });
+        });
+        var sayInput = document.getElementById("sayInput");
+        function sayTyped() {
+          var t = sayInput.value.trim();
+          if (!t) return;
+          ensureCtx(); speak(t); sayInput.value = "";
+        }
+        document.getElementById("sayBtn").addEventListener("click", sayTyped);
+        sayInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sayTyped(); });
+
+        /* ---------------- jokes ---------------- */
+        var JOKES = [
+          ["Why did the teddy bear say no to dessert?", "Because she was stuffed!"],
+          ["What do you call a fish with no eyes?", "A fsh!"],
+          ["Why did the cookie go to the doctor?", "Because he felt crumby!"],
+          ["What do you call cheese that is not yours?", "Nacho cheese!"],
+          ["Why do cows wear bells?", "Because their horns don't work!"],
+          ["What did the ocean say to the beach?", "Nothing — it just waved!"]
+        ];
+        var lastJoke = -1;
+        function tellJoke() {
+          var i;
+          do { i = Math.floor(Math.random() * JOKES.length); } while (i === lastJoke);
+          lastJoke = i;
+          speak(JOKES[i][0], function () {
+            setTimeout(function () {
+              speak(JOKES[i][1], function () { doAction("laugh"); });
+            }, 650);
+          });
+        }
+
+        /* ---------------- actions ---------------- */
+        var animTimers = [];
+        function clearAnims() {
+          animTimers.forEach(clearTimeout); animTimers = [];
+          charWrap.classList.remove("anim-jump", "anim-laugh", "anim-dance", "anim-lean-l", "anim-lean-r", "anim-surprise");
+          void charWrap.offsetWidth; // restart CSS animations cleanly
+        }
+        function later(fn, ms) { animTimers.push(setTimeout(fn, ms)); }
+
+        function doAction(name) {
+          ensureCtx();
+          if (name !== "sleepy" && expr === "sleepy") setExpr("smile", 0);
+          if (stage.getAttribute("data-state") === "dance" && name !== "dance") stage.setAttribute("data-state", "idle");
+
+          switch (name) {
+            case "wave":
+              svg.setAttribute("data-arm", "wave");
+              setExpr("smile", 1500);
+              showBubble("Hello, friends!", 1500);
+              later(function () { svg.setAttribute("data-arm", "rest"); }, 1550);
+              break;
+            case "jump":
+              clearAnims(); charWrap.classList.add("anim-jump");
+              setExpr("surprised", 700);
+              later(function () { SFX.boing(); }, 300);
+              later(function () { charWrap.classList.remove("anim-jump"); }, 760);
+              break;
+            case "laugh":
+              clearAnims(); charWrap.classList.add("anim-laugh");
+              setExpr("laugh", 1500);
+              SFX.giggle();
+              later(function () { charWrap.classList.remove("anim-laugh"); }, 1550);
+              break;
+            case "pointL":
+              clearAnims(); charWrap.classList.add("anim-lean-l");
+              svg.setAttribute("data-arm", "pointL"); svg.setAttribute("data-look", "left");
+              setExpr("smile", 1300);
+              later(function () { svg.setAttribute("data-arm", "rest"); charWrap.classList.remove("anim-lean-l"); }, 1350);
+              break;
+            case "pointR":
+              clearAnims(); charWrap.classList.add("anim-lean-r");
+              svg.setAttribute("data-arm", "pointR"); svg.setAttribute("data-look", "right");
+              setExpr("smile", 1300);
+              later(function () { svg.setAttribute("data-arm", "rest"); charWrap.classList.remove("anim-lean-r"); }, 1350);
+              break;
+            case "smile":
+              setExpr("smile", 2400);
+              showBubble("Cheese!", 1600);
+              break;
+            case "dance":
+              clearAnims(); charWrap.classList.add("anim-dance");
+              stage.setAttribute("data-state", "dance");
+              svg.setAttribute("data-arm", "bothup");
+              setExpr("laugh", 2800);
+              later(function () {
+                charWrap.classList.remove("anim-dance");
+                svg.setAttribute("data-arm", "rest");
+                stage.setAttribute("data-state", "idle");
+              }, 2850);
+              break;
+            case "confused":
+              setExpr("confused", 2600);
+              showBubble("?", 2400, true);
+              break;
+            case "sleepy":
+              setExpr("sleepy", 0, true);
+              svg.setAttribute("data-arm", "rest");
+              break;
+            case "surprise":
+              clearAnims(); charWrap.classList.add("anim-surprise");
+              setExpr("surprised", 1300);
+              showBubble("Wow!", 1200);
+              later(function () { charWrap.classList.remove("anim-surprise"); }, 850);
+              break;
+            case "cheer":
+              svg.setAttribute("data-arm", "bothup");
+              setExpr("laugh", 1400);
+              SFX.tada();
+              later(function () { svg.setAttribute("data-arm", "rest"); }, 1450);
+              break;
+            case "joke":
+              tellJoke();
+              break;
+          }
+        }
+        document.querySelectorAll("[data-action]").forEach(function (btn) {
+          btn.addEventListener("click", function () { doAction(btn.getAttribute("data-action")); });
+        });
+
+        var KEYMAP = { "1": "wave", "2": "jump", "3": "laugh", "4": "pointL", "5": "pointR", "6": "smile", "7": "dance", "8": "confused", "9": "sleepy", "0": "surprise" };
+        document.addEventListener("keydown", function (e) {
+          if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+          var a = KEYMAP[e.key];
+          if (a) { e.preventDefault(); doAction(a); }
+        });
+
+        /* ---------------- view switch + fullscreen ---------------- */
+        document.querySelectorAll("[data-setview]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            document.body.setAttribute("data-view", btn.getAttribute("data-setview"));
+            document.querySelectorAll("[data-setview]").forEach(function (b) {
+              b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+          });
+        });
+        document.getElementById("fsBtn").addEventListener("click", function () {
+          try {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen();
+          } catch (err) { /* fullscreen not available in this frame */ }
+        });
+
+        /* ---------------- microphone + voice changer ---------------- */
+        var micBtn = document.getElementById("micBtn");
+        var micStatus = document.getElementById("micStatus");
+        var meterFill = document.getElementById("meterFill");
+        var sens = document.getElementById("sens");
+        var micOn = false, micStream = null, micSource = null, analyser = null;
+        var chainNodes = [], chainInput = null, masterOut = null;
+        var meterData = null;
+
+        function ringMod(freq, type) {
+          var g = actx.createGain(); g.gain.value = 0;
+          var osc = actx.createOscillator(); osc.type = type || "sine"; osc.frequency.value = freq;
+          var og = actx.createGain(); og.gain.value = 1;
+          osc.connect(og); og.connect(g.gain);
+          osc.start();
+          chainNodes.push(osc, og, g);
+          return g;
+        }
+        function filter(type, freq, q) {
+          var f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q || 0.7;
+          chainNodes.push(f);
+          return f;
+        }
+        function plainGain(v) {
+          var g = actx.createGain(); g.gain.value = v;
+          chainNodes.push(g);
+          return g;
+        }
+        function buildChain() {
+          chainNodes.forEach(function (n) { try { n.disconnect(); } catch (e) {} if (n.stop) { try { n.stop(); } catch (e) {} } });
+          chainNodes = [];
+          if (!chainInput || !masterOut) return;
+          var node = chainInput, next;
+          if (voiceMode === "monster") {
+            var shaper = actx.createWaveShaper();
+            var curve = new Float32Array(256);
+            for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(2.2 * x); }
+            shaper.curve = curve; chainNodes.push(shaper);
+            next = shaper; node.connect(next); node = next;
+            next = filter("lowpass", 640, 0.6); node.connect(next); node = next;
+            next = ringMod(52); node.connect(next); node = next;
+            next = plainGain(1.5); node.connect(next); node = next;
+          } else if (voiceMode === "robot") {
+            next = ringMod(30, "square"); node.connect(next); node = next;
+            next = filter("bandpass", 950, 0.8); node.connect(next); node = next;
+            next = plainGain(1.4); node.connect(next); node = next;
+          } else if (voiceMode === "squeaky") {
+            next = filter("highpass", 320, 0.7); node.connect(next); node = next;
+            next = ringMod(165); node.connect(next); node = next;
+            next = plainGain(1.2); node.connect(next); node = next;
+          }
+          node.connect(masterOut);
+        }
+
+        function meterLoop() {
+          if (!micOn || !analyser) { micLevel = 0; meterFill.style.width = "0%"; return; }
+          analyser.getByteTimeDomainData(meterData);
+          var sum = 0;
+          for (var i = 0; i < meterData.length; i++) {
+            var v = (meterData[i] - 128) / 128;
+            sum += v * v;
+          }
+          var rms = Math.sqrt(sum / meterData.length);
+          var s = parseFloat(sens.value);
+          micLevel = Math.min(1, rms * s * 1.6);
+          meterFill.style.width = Math.min(100, rms * s * 55) + "%";
+          requestAnimationFrame(meterLoop);
+        }
+
+        function stopMic() {
+          micOn = false;
+          if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); });
+          micStream = null;
+          [micSource, chainInput, masterOut].forEach(function (n) { if (n) { try { n.disconnect(); } catch (e) {} } });
+          chainNodes.forEach(function (n) { try { n.disconnect(); } catch (e) {} if (n.stop) { try { n.stop(); } catch (e) {} } });
+          chainNodes = [];
+          micLevel = 0; meterFill.style.width = "0%";
+          micBtn.textContent = "Start microphone";
+          micBtn.classList.remove("live");
+          micStatus.textContent = "Microphone is off";
+        }
+
+        micBtn.addEventListener("click", function () {
+          if (micOn) { stopMic(); return; }
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            micStatus.textContent = "This browser can't use a microphone here — try the typed lines below instead.";
+            return;
+          }
+          ensureCtx();
+          navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } })
+            .then(function (stream) {
+              micStream = stream;
+              micSource = actx.createMediaStreamSource(stream);
+              analyser = actx.createAnalyser();
+              analyser.fftSize = 512;
+              meterData = new Uint8Array(analyser.fftSize);
+              chainInput = actx.createGain(); chainInput.gain.value = 1;
+              masterOut = actx.createGain(); masterOut.gain.value = 0.9;
+              masterOut.connect(actx.destination);
+              micSource.connect(analyser);
+              micSource.connect(chainInput);
+              buildChain();
+              micOn = true;
+              micBtn.textContent = "Stop microphone";
+              micBtn.classList.add("live");
+              micStatus.textContent = "Listening — talk and watch Giggles' mouth!";
+              requestAnimationFrame(meterLoop);
+            })
+            .catch(function () {
+              micStatus.textContent = "Microphone wasn't allowed. Check the browser's mic permission, or use the typed lines below.";
+            });
+        });
+
+        document.querySelectorAll("[data-voice]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            voiceMode = btn.getAttribute("data-voice");
+            document.querySelectorAll("[data-voice]").forEach(function (b) {
+              b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+            if (micOn) buildChain();
+          });
+        });
+
+        // greet on load
+        setTimeout(function () { showBubble("Hi! I'm Giggles!", 2800); }, 600);
+      })();
+    </script>
+  </body>
+</html>
