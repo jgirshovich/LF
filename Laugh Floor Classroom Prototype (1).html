@@ -1,0 +1,1819 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Laugh Floor Classroom Prototype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      button, [role="button"], select, summary, input:not([type="checkbox"], [type="radio"]) { min-height: 2.25rem; }
+
+      :root {
+        --panel-bg: #fdf6ec;
+        --panel-card: #ffffff;
+        --panel-ink: #2b2118;
+        --panel-ink-soft: #6b5d4f;
+        --panel-line: #e8dcc8;
+        --accent: #e4572e;
+        --accent-ink: #ffffff;
+        --accent2: #0e7c86;
+        --accent2-soft: #e2f2f3;
+        --chip-bg: #fff3df;
+        --chip-line: #f0d9ae;
+        --good: #1e9e62;
+        --warn: #dd8a1d;
+        --stage-bg: #101d2e;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --panel-bg: #1d1712;
+          --panel-card: #2a211a;
+          --panel-ink: #f7ecdd;
+          --panel-ink-soft: #c9b8a4;
+          --panel-line: #463829;
+          --accent2-soft: #173a3e;
+          --chip-bg: #38291a;
+          --chip-line: #5a422a;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: "Nunito", system-ui, sans-serif;
+        background: var(--panel-bg);
+        color: var(--panel-ink);
+        -webkit-tap-highlight-color: transparent;
+      }
+      h1, h2, .display { font-family: "Baloo 2", "Nunito", system-ui, sans-serif; }
+
+      /* ---------- top bar ---------- */
+      .topbar {
+        display: flex; flex-wrap: wrap; gap: .5rem; align-items: center;
+        padding: .6rem .9rem;
+      }
+      .topbar .spacer { flex: 1; }
+      .view-switch { display: inline-flex; background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 999px; padding: 3px; gap: 2px; }
+      .view-switch button {
+        border: 0; background: transparent; color: var(--panel-ink-soft);
+        font: 700 .85rem "Nunito", sans-serif; padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+      }
+      .view-switch button[aria-pressed="true"] { background: var(--accent2); color: #fff; }
+      .ghost-btn {
+        border: 2px solid var(--panel-line); background: var(--panel-card); color: var(--panel-ink);
+        font: 700 .85rem "Nunito", sans-serif; padding: .35rem .8rem; border-radius: 999px; cursor: pointer;
+      }
+      .conn-pill {
+        display: inline-flex; align-items: center; gap: .45rem;
+        background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 999px;
+        padding: .35rem .8rem; font: 800 .85rem "Nunito", sans-serif; color: var(--panel-ink);
+      }
+      .conn-pill .cdot { width: 11px; height: 11px; border-radius: 50%; background: #b3a58d; flex: none; }
+      .conn-pill[data-state="ok"] .cdot { background: var(--good); box-shadow: 0 0 0 4px rgba(30,158,98,.18); }
+      .conn-pill[data-state="wait"] .cdot { background: var(--warn); box-shadow: 0 0 0 4px rgba(221,138,29,.18); }
+
+      /* ---------- setup screen ---------- */
+      .setup { max-width: 720px; margin: 0 auto; padding: 0 1rem 1.4rem; }
+      .setup-card { background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 20px; padding: 1.1rem 1.15rem 1.2rem; }
+      .setup-card h2 { margin: 0 0 .3rem; font-size: 1.45rem; font-weight: 800; }
+      .setup-card .hint { margin: 0 0 .8rem; color: var(--panel-ink-soft); font-size: .95rem; font-weight: 600; line-height: 1.45; }
+      .setup-steps { margin: .2rem 0 1rem; padding-left: 1.3rem; }
+      .setup-steps li { margin: .45rem 0; font-size: 1rem; line-height: 1.5; }
+      .setup-card textarea {
+        width: 100%; border: 2px solid var(--panel-line); border-radius: 12px; padding: .6rem .7rem;
+        font: 600 .85rem ui-monospace, Menlo, monospace; background: var(--panel-card); color: var(--panel-ink);
+        resize: vertical;
+      }
+      .cfg-error { color: #c1272d; font-weight: 800; min-height: 1.2em; margin: .4rem 0 0; font-size: .95rem; }
+      .setup-btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .7rem; align-items: center; }
+      body.setup-open .layout, body.setup-open .linkbar { display: none; }
+
+      /* ---------- link bar ---------- */
+      .linkbar { max-width: 1600px; margin: 0 auto; padding: 0 1rem .4rem; }
+      .linkbar-inner { background: var(--panel-card); border: 2px solid var(--accent2); border-radius: 20px; padding: 1rem 1.05rem 1.1rem; }
+      .linkbar-inner h2 { margin: 0 0 .15rem; font-size: 1.3rem; font-weight: 800; }
+      .linkbar-inner .hint { margin: 0 0 .8rem; color: var(--panel-ink-soft); font-size: .92rem; font-weight: 600; line-height: 1.45; }
+      .room-row { display: flex; flex-wrap: wrap; gap: .55rem; align-items: center; margin-top: .8rem; }
+      .room-row label { font: 800 .95rem "Nunito", sans-serif; display: inline-flex; align-items: center; gap: .5rem; }
+      .room-row input {
+        width: 6.2rem; text-transform: uppercase; letter-spacing: .18em; text-align: center;
+        border: 2px solid var(--panel-line); border-radius: 12px; padding: .45rem .4rem;
+        font: 800 1.15rem "Baloo 2", sans-serif; background: var(--panel-card); color: var(--panel-ink);
+      }
+      .link-status { font-weight: 800; font-size: .95rem; margin: .7rem 0 0; min-height: 1.2em; }
+      .link-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .8rem; }
+
+      /* ---------- layout ---------- */
+      .layout {
+        display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 430px);
+        gap: 1rem; padding: 0 1rem 1.2rem; align-items: start;
+        max-width: 1600px; margin: 0 auto;
+      }
+      .stage-wrap, .panel { min-width: 0; }
+      body[data-view="stage"] .layout { grid-template-columns: minmax(0, 1fr); }
+      body[data-view="stage"] .panel { display: none; }
+      body[data-view="controls"] .stage-wrap { display: none; }
+      body[data-view="controls"] .layout { grid-template-columns: minmax(0, 640px); justify-content: center; }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: minmax(0, 1fr); }
+      }
+
+      /* ---------- stage ---------- */
+      .stage-wrap { position: sticky; top: .6rem; }
+      @media (max-width: 900px) {
+        .stage-wrap { position: static; }
+        .stage { min-height: min(64vh, 540px); }
+      }
+      @media (max-width: 600px) {
+        .curtain { width: 30px; }
+        .valance { height: 26px; }
+        .bubble { top: 40px; }
+        .stage-link { left: 38px; }
+        .prop { width: 56px; }
+        .prop span { font-size: .68rem; }
+      }
+      .stage {
+        position: relative; overflow: hidden; border-radius: 26px;
+        background:
+          radial-gradient(ellipse 62% 46% at 50% 30%, rgba(255, 214, 130, .34), rgba(255, 214, 130, 0) 70%),
+          radial-gradient(ellipse 120% 90% at 50% 0%, #274b63 0%, var(--stage-bg) 62%);
+        min-height: min(78vh, 720px);
+        display: flex; align-items: flex-end; justify-content: center;
+        box-shadow: 0 18px 40px rgba(16, 29, 46, .35);
+      }
+      .curtain { position: absolute; top: 0; bottom: 0; width: 54px; z-index: 3; pointer-events: none;
+        background: repeating-linear-gradient(90deg, #a31621 0 12px, #c1272d 12px 22px, #7e1019 22px 34px);
+        box-shadow: inset -14px 0 22px rgba(0,0,0,.35);
+      }
+      .curtain.left { left: 0; border-radius: 0 0 18px 0; }
+      .curtain.right { right: 0; transform: scaleX(-1); border-radius: 0 0 18px 0; }
+      .valance { position: absolute; top: 0; left: 0; right: 0; height: 34px; z-index: 4; pointer-events: none;
+        background: repeating-linear-gradient(90deg, #a31621 0 26px, #c1272d 26px 48px, #7e1019 48px 70px);
+        -webkit-mask: radial-gradient(circle 17px at 17px 0, transparent 16px, #000 17px) 0 0 / 44px 34px repeat-x;
+                mask: radial-gradient(circle 17px at 17px 0, transparent 16px, #000 17px) 0 0 / 44px 34px repeat-x;
+        opacity: .95;
+      }
+      .floor {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 15%; z-index: 1;
+        background: repeating-linear-gradient(90deg, #6b4423 0 64px, #7d5128 64px 128px);
+        border-top: 6px solid #54331a;
+        transform: perspective(300px) rotateX(24deg); transform-origin: bottom;
+      }
+      .spot-pool {
+        position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%);
+        width: 62%; height: 60px; border-radius: 50%; z-index: 1;
+        background: radial-gradient(ellipse at center, rgba(255, 220, 150, .5), rgba(255, 220, 150, 0) 70%);
+      }
+      .bubble {
+        position: absolute; top: 52px; left: 50%; transform: translateX(-50%) scale(.8);
+        z-index: 6; max-width: min(78%, 460px);
+        background: #fffdf7; color: #2b2118; border: 3px solid #2b2118; border-radius: 20px;
+        font: 700 clamp(1rem, 2.4vw, 1.45rem)/1.25 "Baloo 2", sans-serif; text-align: center;
+        padding: .55rem 1rem; opacity: 0; transition: opacity .18s ease, transform .18s ease; pointer-events: none;
+      }
+      .bubble::after {
+        content: ""; position: absolute; left: 50%; bottom: -14px; transform: translateX(-50%);
+        border: 8px solid transparent; border-top: 10px solid #2b2118; border-bottom: 0;
+      }
+      .bubble.show { opacity: 1; transform: translateX(-50%) scale(1); }
+      .bubble.big-q { font-size: clamp(2rem, 6vw, 3.4rem); padding: .1rem 1.1rem; }
+
+      .stage-link {
+        position: absolute; top: 46px; left: 64px; z-index: 6;
+        display: inline-flex; align-items: center; gap: .4rem;
+        background: rgba(10, 20, 32, .62); color: #eaf3ff; border-radius: 999px;
+        padding: .3rem .7rem; font: 800 .78rem "Nunito", sans-serif; pointer-events: none;
+      }
+      .stage-link .cdot { width: 9px; height: 9px; border-radius: 50%; background: #9fb3c8; flex: none; }
+      .stage-link[data-state="ok"] .cdot { background: #35d489; }
+      .stage-link[data-state="wait"] .cdot { background: #ffb340; }
+
+      .sound-btn {
+        position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); z-index: 8;
+        border: 0; border-radius: 999px; padding: .8rem 1.6rem; cursor: pointer;
+        background: var(--accent); color: #fff; font: 800 1.15rem "Baloo 2", sans-serif;
+        box-shadow: 0 10px 26px rgba(0,0,0,.4); animation: pulseBtn 1.2s ease-in-out infinite;
+      }
+      @keyframes pulseBtn { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.06); } }
+
+      .char-zone { position: relative; z-index: 2; width: min(88%, 520px); margin-bottom: 104px; }
+      .char-wrap { transform-origin: 50% 92%; animation: idleBob 3.2s ease-in-out infinite; }
+      .char-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+      /* props in front of Giggles */
+      .props-row {
+        position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 3;
+        display: flex; gap: clamp(.4rem, 2vw, 1.1rem); align-items: flex-end; max-width: 94%;
+      }
+      .prop {
+        width: 76px; background: none; border: 0; padding: 0; cursor: pointer;
+        display: flex; flex-direction: column; align-items: center; gap: 1px;
+        filter: drop-shadow(0 5px 5px rgba(0,0,0,.35));
+        transition: opacity .25s ease, transform .25s ease;
+      }
+      .prop svg { width: 100%; height: auto; display: block; }
+      .prop span { font: 800 .78rem "Baloo 2", sans-serif; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.75); }
+      .prop.held { opacity: .28; filter: grayscale(.5); transform: scale(.92); }
+      .held-prop {
+        position: absolute; right: -4%; top: 33%; width: 27%; z-index: 3; pointer-events: none;
+        filter: drop-shadow(0 8px 10px rgba(0,0,0,.35));
+        animation: heldBob 1.6s ease-in-out infinite;
+      }
+      .held-prop svg { width: 100%; height: auto; display: block; }
+      .held-prop.pop { animation: popIn .35s cubic-bezier(.28,1.4,.5,1), heldBob 1.6s ease-in-out .35s infinite; }
+      @keyframes popIn { 0% { transform: scale(.3) translateY(26px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+      @keyframes heldBob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-7px) rotate(3deg); } }
+
+      @keyframes idleBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+      .char-wrap.anim-jump { animation: jumpA .72s cubic-bezier(.28,.84,.42,1); }
+      @keyframes jumpA { 0% { transform: translateY(0) scale(1,1); } 18% { transform: translateY(6px) scale(1.06,.9); } 48% { transform: translateY(-88px) scale(.97,1.05); } 78% { transform: translateY(4px) scale(1.05,.92); } 100% { transform: translateY(0) scale(1,1); } }
+      .char-wrap.anim-laugh { animation: laughA 1.5s ease-in-out; }
+      @keyframes laughA { 0%,100% { transform: rotate(0) translateY(0); } 15% { transform: rotate(-3.4deg) translateY(-9px); } 30% { transform: rotate(3.4deg) translateY(-4px); } 45% { transform: rotate(-3deg) translateY(-10px); } 60% { transform: rotate(3deg) translateY(-3px); } 78% { transform: rotate(-1.6deg) translateY(-6px); } }
+      .char-wrap.anim-dance { animation: danceA 2.8s ease-in-out; }
+      @keyframes danceA { 0%,100% { transform: translateX(0) rotate(0); } 12% { transform: translateX(-26px) rotate(-6deg) translateY(-10px); } 25% { transform: translateX(0) rotate(0) translateY(4px) scale(1.04,.94); } 37% { transform: translateX(26px) rotate(6deg) translateY(-10px); } 50% { transform: translateX(0) translateY(-16px); } 62% { transform: translateX(-26px) rotate(-6deg) translateY(-8px); } 75% { transform: translateX(0) translateY(4px) scale(1.04,.94); } 87% { transform: translateX(26px) rotate(6deg) translateY(-8px); } }
+      .char-wrap.anim-lean-l { animation: leanL 1.3s ease-in-out; }
+      @keyframes leanL { 0%,100% { transform: rotate(0); } 30%,70% { transform: rotate(-5deg) translateX(-10px); } }
+      .char-wrap.anim-lean-r { animation: leanR 1.3s ease-in-out; }
+      @keyframes leanR { 0%,100% { transform: rotate(0); } 30%,70% { transform: rotate(5deg) translateX(10px); } }
+      .char-wrap.anim-surprise { animation: surpriseA .8s ease; }
+      @keyframes surpriseA { 0% { transform: scale(1); } 35% { transform: scale(1.07) translateY(-14px); } 100% { transform: scale(1); } }
+
+      /* SVG part animation */
+      .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
+      @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.08); } }
+      svg[data-expr="sleepy"] .eye { animation: none; transform: scaleY(.14); }
+      svg[data-expr="surprised"] .eye { animation: none; transform: scaleY(1.12); }
+      .pupils { transition: transform .25s ease; }
+      svg[data-look="left"] .pupils { transform: translateX(-7px); }
+      svg[data-look="right"] .pupils { transform: translateX(7px); }
+      svg[data-expr="sleepy"] .pupils { transform: translateY(4px); }
+      #armR, #armL { transform-box: fill-box; transition: transform .3s ease; }
+      #armR { transform-origin: 12% 18%; }
+      #armL { transform-origin: 88% 18%; }
+      svg[data-arm="wave"] #armR { animation: waveA 1.5s ease-in-out; }
+      @keyframes waveA { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-128deg); } 40% { transform: rotate(-104deg); } 60% { transform: rotate(-132deg); } 80% { transform: rotate(-108deg); } }
+      svg[data-arm="pointL"] #armL { transform: rotate(96deg); }
+      svg[data-arm="pointR"] #armR { transform: rotate(-96deg); }
+      svg[data-arm="hold"] #armR { transform: rotate(-55deg); }
+      svg[data-arm="bothup"] #armL { transform: rotate(140deg); }
+      svg[data-arm="bothup"] #armR { transform: rotate(-140deg); }
+      svg[data-expr="sleepy"] #armL, svg[data-expr="sleepy"] #armR { transform: rotate(6deg); }
+      .brow { transition: transform .25s ease; transform-box: fill-box; transform-origin: center; }
+      svg[data-expr="confused"] #browL { transform: translateY(-7px) rotate(-10deg); }
+      svg[data-expr="confused"] #browR { transform: translateY(2px) rotate(8deg); }
+      svg[data-expr="sleepy"] .brow { transform: translateY(5px); }
+      svg[data-expr="surprised"] .brow { transform: translateY(-8px); }
+      svg[data-expr="laugh"] .eye { animation: none; transform: scaleY(.25); }
+
+      .zzz { position: absolute; top: 6%; right: 14%; z-index: 5; pointer-events: none; display: none; }
+      .zzz span { position: absolute; font: 800 1.6rem "Baloo 2", sans-serif; color: #bcd8ff; opacity: 0; animation: zFloat 2.6s ease-in-out infinite; }
+      .zzz span:nth-child(2) { left: 22px; top: -18px; font-size: 2.1rem; animation-delay: .8s; }
+      .zzz span:nth-child(3) { left: 50px; top: -44px; font-size: 2.7rem; animation-delay: 1.6s; }
+      @keyframes zFloat { 0% { opacity: 0; transform: translateY(10px) rotate(-6deg); } 35% { opacity: 1; } 100% { opacity: 0; transform: translateY(-16px) rotate(8deg); } }
+      .stage[data-state="sleepy"] .zzz { display: block; }
+
+      .notes { position: absolute; inset: 0; z-index: 4; pointer-events: none; display: none; }
+      .notes span { position: absolute; font: 800 2rem "Baloo 2", sans-serif; color: #ffd166; opacity: 0; animation: noteFloat 2.6s ease-out infinite; }
+      .notes span:nth-child(1) { left: 16%; top: 34%; }
+      .notes span:nth-child(2) { right: 15%; top: 26%; animation-delay: .6s; color: #ff8fa3; }
+      .notes span:nth-child(3) { left: 24%; top: 16%; animation-delay: 1.2s; color: #8be0d4; }
+      .notes span:nth-child(4) { right: 24%; top: 44%; animation-delay: 1.7s; }
+      @keyframes noteFloat { 0% { opacity: 0; transform: translateY(14px) rotate(-8deg) scale(.8); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-42px) rotate(10deg) scale(1.1); } }
+      .stage[data-state="dance"] .notes { display: block; }
+
+      .stage-caption { margin: .55rem .2rem 0; color: var(--panel-ink-soft); font-size: .9rem; font-weight: 600; }
+      body[data-view="stage"] .stage-caption { display: none; }
+
+      /* ---------- control panel ---------- */
+      .panel { display: flex; flex-direction: column; gap: 1rem; }
+      .card {
+        background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 20px;
+        padding: 1rem 1.05rem 1.1rem;
+      }
+      .card h2 { margin: 0 0 .15rem; font-size: 1.3rem; font-weight: 800; letter-spacing: .01em; }
+      .card .hint { margin: 0 0 .8rem; color: var(--panel-ink-soft); font-size: .9rem; font-weight: 600; line-height: 1.45; }
+      .grid-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; }
+      @media (max-width: 420px) { .grid-actions { grid-template-columns: repeat(2, 1fr); } }
+      .act-btn {
+        border: 2px solid var(--chip-line); background: var(--chip-bg); color: var(--panel-ink);
+        border-radius: 16px; padding: .6rem .3rem .5rem; cursor: pointer;
+        font: 700 .92rem/1.15 "Baloo 2", sans-serif; display: flex; flex-direction: column; align-items: center; gap: .3rem;
+        min-height: 4.4rem; justify-content: center; text-align: center;
+      }
+      .act-btn svg { width: 26px; height: 26px; }
+      .act-btn:active { transform: scale(.95); }
+      .act-btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+      .act-btn.holding { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+      .seg { display: flex; flex-wrap: wrap; gap: .45rem; }
+      .seg button {
+        border: 2px solid var(--panel-line); background: var(--panel-card); color: var(--panel-ink);
+        border-radius: 999px; padding: .45rem .9rem; cursor: pointer; font: 800 .9rem "Nunito", sans-serif;
+      }
+      .seg button[aria-pressed="true"] { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+      .mic-row { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+      .mic-btn {
+        border: 0; border-radius: 999px; padding: .65rem 1.3rem; cursor: pointer;
+        background: var(--accent); color: #fff; font: 800 1rem "Baloo 2", sans-serif;
+      }
+      .mic-btn.live { background: var(--good); }
+      .mic-status { font-weight: 700; font-size: .9rem; color: var(--panel-ink-soft); }
+      .meter { height: 16px; border-radius: 999px; background: var(--accent2-soft); overflow: hidden; margin: .7rem 0 .2rem; border: 1px solid var(--panel-line); }
+      .meter > div { height: 100%; width: 0%; background: linear-gradient(90deg, #35c48d, #ffd166 70%, #e4572e); transition: width .06s linear; border-radius: 999px; }
+      .slider-row { display: flex; align-items: center; gap: .6rem; margin-top: .55rem; font-weight: 700; font-size: .9rem; color: var(--panel-ink-soft); }
+      .slider-row input[type="range"] { flex: 1; accent-color: var(--accent2); min-height: 2.25rem; }
+
+      .phrase-grid { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .7rem; }
+      .phrase {
+        border: 2px solid var(--chip-line); background: var(--chip-bg); color: var(--panel-ink);
+        border-radius: 999px; padding: .45rem .85rem; cursor: pointer; font: 700 .9rem "Nunito", sans-serif;
+      }
+      .phrase:active { transform: scale(.96); }
+      .speak-row { display: flex; gap: .5rem; }
+      .speak-row input {
+        flex: 1; min-width: 0; border: 2px solid var(--panel-line); border-radius: 12px; padding: .5rem .7rem;
+        font: 600 1rem "Nunito", sans-serif; background: var(--panel-card); color: var(--panel-ink);
+      }
+      .speak-btn {
+        border: 0; border-radius: 12px; padding: .5rem 1.1rem; cursor: pointer;
+        background: var(--accent2); color: #fff; font: 800 1rem "Baloo 2", sans-serif; white-space: nowrap;
+      }
+      .sfx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .55rem; }
+      @media (max-width: 420px) { .sfx-grid { grid-template-columns: repeat(2, 1fr); } }
+      .sfx-btn {
+        border: 2px solid var(--panel-line); background: var(--accent2-soft); color: var(--panel-ink);
+        border-radius: 14px; padding: .55rem .2rem; cursor: pointer; font: 700 .92rem "Baloo 2", sans-serif; min-height: 3rem;
+      }
+      .sfx-btn:active { transform: scale(.95); }
+
+      /* lesson items editor */
+      .item-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: .55rem; margin-bottom: .9rem; }
+      @media (max-width: 420px) { .item-btns { grid-template-columns: repeat(2, 1fr); } }
+      .item-btns .act-btn svg { width: 34px; height: 34px; }
+      .item-row { border: 2px solid var(--panel-line); border-radius: 14px; padding: .6rem .65rem; margin-bottom: .55rem; }
+      .item-row .r1 { display: flex; gap: .45rem; align-items: center; }
+      .item-row input[type="text"] {
+        flex: 1; min-width: 0; border: 2px solid var(--panel-line); border-radius: 10px; padding: .4rem .55rem;
+        font: 700 .95rem "Nunito", sans-serif; background: var(--panel-card); color: var(--panel-ink);
+      }
+      .item-row select {
+        border: 2px solid var(--panel-line); border-radius: 10px; padding: .4rem .3rem;
+        font: 700 .9rem "Nunito", sans-serif; background: var(--panel-card); color: var(--panel-ink);
+      }
+      .item-row .del {
+        border: 2px solid var(--panel-line); background: var(--panel-card); color: #c1272d;
+        border-radius: 10px; font: 800 .9rem "Nunito", sans-serif; cursor: pointer; padding: .3rem .6rem;
+      }
+      .item-row .say-line { width: 100%; margin-top: .45rem; }
+      .add-item-btn {
+        border: 2px dashed var(--chip-line); background: var(--chip-bg); color: var(--panel-ink);
+        border-radius: 12px; padding: .5rem 1rem; cursor: pointer; font: 800 .95rem "Nunito", sans-serif; width: 100%;
+      }
+
+      details.help { background: var(--panel-card); border: 2px solid var(--panel-line); border-radius: 20px; padding: .4rem 1.05rem; }
+      details.help summary { font: 800 1.05rem "Baloo 2", sans-serif; cursor: pointer; padding: .55rem 0; }
+      details.help ol, details.help ul { margin: .3rem 0 .9rem; padding-left: 1.25rem; }
+      details.help li { margin: .35rem 0; font-size: .95rem; line-height: 1.45; }
+      details.help p { font-size: .95rem; line-height: 1.45; }
+      kbd { background: var(--chip-bg); border: 1.5px solid var(--chip-line); border-bottom-width: 3px; border-radius: 6px; padding: 0 .35rem; font: 700 .85em "Nunito", sans-serif; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .char-wrap, .eye, .zzz span, .notes span, .held-prop, .sound-btn { animation: none !important; }
+        * { transition: none !important; }
+      }
+    </style>
+  </head>
+  <body data-view="both">
+
+    <div class="topbar">
+      <div class="view-switch" role="group" aria-label="Choose what this screen shows">
+        <button type="button" data-setview="both" aria-pressed="true">Stage + Controls</button>
+        <button type="button" data-setview="stage" aria-pressed="false">Stage only</button>
+        <button type="button" data-setview="controls" aria-pressed="false">Controls only</button>
+      </div>
+      <div class="conn-pill" id="connPill" data-state="off" title="Link status">
+        <span class="cdot"></span><span id="connText">Not linked</span>
+      </div>
+      <div class="spacer"></div>
+      <button type="button" class="ghost-btn" id="linkBtn">Link devices</button>
+      <button type="button" class="ghost-btn" id="fsBtn">Full screen</button>
+    </div>
+
+    <!-- ================= SETUP (first run, per device) ================= -->
+    <section class="setup" id="setupScreen" hidden>
+      <div class="setup-card">
+        <h2>One-time setup: link two devices</h2>
+        <p class="hint">Giggles' stage and the teacher's controller talk to each other through a free Firebase project. You create it once, on your school Google account, then paste one small block of settings into each device. It stays saved on the device — you only do this once per device.</p>
+        <ol class="setup-steps">
+          <li>On a computer, open <strong>console.firebase.google.com</strong> and sign in with <strong>jgirshovich@stanneschool.net</strong>.</li>
+          <li>Click <strong>Add project</strong>, name it <em>Laugh Floor</em>, and click through (Google Analytics can stay off).</li>
+          <li>In the project, open <strong>Build → Realtime Database</strong>, click <strong>Create database</strong>, and choose <strong>Start in test mode</strong>.</li>
+          <li>Back on the project home page, click the web icon <strong>&lt;/&gt;</strong> to add a web app, give it any nickname, and click <strong>Register app</strong>.</li>
+          <li>Firebase shows a block of code with <strong>firebaseConfig</strong> in it. Copy that whole block and paste it below.</li>
+        </ol>
+        <textarea id="cfgInput" rows="7" spellcheck="false" placeholder="Paste the firebaseConfig block here…"></textarea>
+        <p class="cfg-error" id="cfgError" role="alert"></p>
+        <div class="setup-btns">
+          <button type="button" class="speak-btn" id="cfgSave">Save setup on this device</button>
+          <button type="button" class="ghost-btn" id="cfgSkip">Skip — use this device only</button>
+        </div>
+        <p class="hint" style="margin-top:.8rem">Skipping is fine for trying Giggles out on one screen. Linking can be set up later from the <strong>Link devices</strong> button.</p>
+      </div>
+    </section>
+
+    <!-- ================= LINK BAR ================= -->
+    <div class="linkbar" id="linkBar" hidden>
+      <div class="linkbar-inner" id="linkJoinBox">
+        <h2>Link this device</h2>
+        <p class="hint">Open this page on both devices, pick a role on each, and type the <strong>same room code</strong> on both. The stage device goes on the board (AirPlay it, then use Stage only + Full screen). The controller is the iPad in your hand. Commands travel through Firebase; your live voice travels directly between the two devices.</p>
+        <div class="seg" role="group" aria-label="This device is">
+          <button type="button" data-role="stage" aria-pressed="false">Stage — goes on the board</button>
+          <button type="button" data-role="controller" aria-pressed="false">Controller — teacher's iPad</button>
+        </div>
+        <div class="room-row">
+          <label for="roomInput">Room code</label>
+          <input type="text" id="roomInput" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABCD" />
+          <button type="button" class="ghost-btn" id="genRoomBtn">New code</button>
+          <button type="button" class="speak-btn" id="joinBtn">Join room</button>
+        </div>
+        <p class="link-status" id="linkStatus" role="status"></p>
+        <div class="link-actions">
+          <button type="button" class="ghost-btn" id="leaveBtn" hidden>Leave room</button>
+          <button type="button" class="ghost-btn" id="reconnectBtn" hidden>Reconnect voice</button>
+          <button type="button" class="ghost-btn" id="changeSetupBtn">Firebase setup…</button>
+          <button type="button" class="ghost-btn" id="forgetBtn">Forget saved Firebase settings</button>
+        </div>
+      </div>
+      <div class="linkbar-inner" id="linkSetupBox" hidden>
+        <h2>Linking isn't set up on this device yet</h2>
+        <p class="hint">Linking needs the one-time Firebase setup (about five minutes, free). Until then, this device works on its own: stage and controls on the same screen.</p>
+        <div class="link-actions">
+          <button type="button" class="speak-btn" id="openSetupBtn">Start the Firebase setup</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- ================= STAGE ================= -->
+      <div class="stage-wrap">
+        <div class="stage" id="stage" data-state="idle">
+          <div class="valance"></div>
+          <div class="curtain left"></div>
+          <div class="curtain right"></div>
+          <div class="floor"></div>
+          <div class="spot-pool"></div>
+          <div class="bubble" id="bubble" aria-live="polite"></div>
+          <div class="stage-link" id="stageLink" data-state="off"><span class="cdot"></span><span id="stageLinkText">Not linked</span></div>
+          <button type="button" class="sound-btn" id="soundBtn" hidden>Tap for sound</button>
+          <div class="zzz" aria-hidden="true"><span>Z</span><span>Z</span><span>Z</span></div>
+          <div class="notes" aria-hidden="true"><span>♪</span><span>♫</span><span>♪</span><span>♫</span></div>
+
+          <div class="char-zone">
+            <div class="char-wrap" id="charWrap">
+              <svg id="giggles" viewBox="0 0 420 440" role="img" aria-label="Giggles, a friendly teal monster with orange horns" data-expr="smile" data-arm="rest" data-look="center">
+                <defs>
+                  <radialGradient id="bodyGrad" cx="42%" cy="30%" r="85%">
+                    <stop offset="0%" stop-color="#3fd0c2" />
+                    <stop offset="100%" stop-color="#12998c" />
+                  </radialGradient>
+                  <clipPath id="mouthClip"><path id="mouthClipPath" d="" /></clipPath>
+                </defs>
+
+                <ellipse cx="210" cy="410" rx="112" ry="14" fill="rgba(0,0,0,.28)" />
+
+                <!-- arms (behind body) -->
+                <g id="armL">
+                  <path d="M120 216 C 82 246, 62 278, 58 310" fill="none" stroke="#12998c" stroke-width="27" stroke-linecap="round" />
+                  <circle cx="58" cy="314" r="16" fill="#f4a259" />
+                </g>
+                <g id="armR">
+                  <path d="M300 216 C 338 246, 358 278, 362 310" fill="none" stroke="#12998c" stroke-width="27" stroke-linecap="round" />
+                  <circle cx="362" cy="314" r="16" fill="#f4a259" />
+                </g>
+
+                <!-- feet -->
+                <ellipse cx="152" cy="398" rx="34" ry="13" fill="#f4a259" />
+                <ellipse cx="268" cy="398" rx="34" ry="13" fill="#f4a259" />
+
+                <!-- body -->
+                <path d="M210 58 C 302 58 350 140 350 234 C 350 332 292 398 210 398 C 128 398 70 332 70 234 C 70 140 118 58 210 58 Z" fill="url(#bodyGrad)" />
+                <ellipse cx="210" cy="306" rx="86" ry="76" fill="#ffd9a0" opacity=".92" />
+                <circle cx="102" cy="180" r="11" fill="#0b6e64" opacity=".35" />
+                <circle cx="318" cy="196" r="9" fill="#0b6e64" opacity=".35" />
+                <circle cx="112" cy="286" r="8" fill="#0b6e64" opacity=".3" />
+
+                <!-- horns -->
+                <path d="M148 76 C 134 44 146 24 170 16 C 176 40 172 60 182 74 C 172 84 156 84 148 76 Z" fill="#f4a259" />
+                <path d="M272 76 C 286 44 274 24 250 16 C 244 40 248 60 238 74 C 248 84 264 84 272 76 Z" fill="#f4a259" />
+
+                <!-- brows -->
+                <path class="brow" id="browL" d="M138 104 Q 167 90 196 104" fill="none" stroke="#0b4f47" stroke-width="8" stroke-linecap="round" />
+                <path class="brow" id="browR" d="M224 104 Q 253 90 282 104" fill="none" stroke="#0b4f47" stroke-width="8" stroke-linecap="round" />
+
+                <!-- eyes -->
+                <g class="eye">
+                  <ellipse cx="167" cy="152" rx="31" ry="37" fill="#ffffff" />
+                  <g class="pupils">
+                    <circle cx="167" cy="158" r="14" fill="#22303c" />
+                    <circle cx="172" cy="152" r="5" fill="#ffffff" />
+                  </g>
+                </g>
+                <g class="eye">
+                  <ellipse cx="253" cy="152" rx="31" ry="37" fill="#ffffff" />
+                  <g class="pupils">
+                    <circle cx="253" cy="158" r="14" fill="#22303c" />
+                    <circle cx="258" cy="152" r="5" fill="#ffffff" />
+                  </g>
+                </g>
+
+                <!-- nose + cheeks -->
+                <ellipse cx="210" cy="208" rx="13" ry="10" fill="#f4a259" />
+                <circle cx="124" cy="228" r="15" fill="#ff9d9d" opacity=".5" />
+                <circle cx="296" cy="228" r="15" fill="#ff9d9d" opacity=".5" />
+
+                <!-- mouth -->
+                <path id="mouthPath" d="" fill="#7c2231" />
+                <g clip-path="url(#mouthClip)">
+                  <rect id="teeth" x="186" y="238" width="48" height="17" rx="6" fill="#ffffff" />
+                  <ellipse id="tongue" cx="210" cy="292" rx="26" ry="11" fill="#ef6f8b" />
+                </g>
+              </svg>
+            </div>
+            <div class="held-prop" id="heldProp" hidden></div>
+          </div>
+
+          <div class="props-row" id="propsRow" aria-label="Items in front of Giggles"></div>
+        </div>
+        <p class="stage-caption">This is Giggles. Put this screen on the classroom board (Stage only + Full screen), and drive him from the controller iPad using the same room code.</p>
+      </div>
+
+      <!-- ================= CONTROLS ================= -->
+      <div class="panel">
+        <section class="card" aria-labelledby="h-moves">
+          <h2 id="h-moves">Giggles' moves</h2>
+          <p class="hint">Big buttons, made for quick taps between questions.</p>
+          <div class="grid-actions">
+            <button type="button" class="act-btn" data-action="wave">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 11.5V6a1.5 1.5 0 0 1 3 0V5a1.5 1.5 0 0 1 3 0v-.5a1.5 1.5 0 0 1 3 0V6a1.5 1.5 0 0 1 3 0v6a7 7 0 0 1-7 7h-.6c-2.3 0-3.9-.9-5.2-2.7L3.6 13c-.6-.9-.4-1.9.3-2.4.7-.5 1.6-.3 2.2.5L7 12.5"/></svg>
+              Wave hello
+            </button>
+            <button type="button" class="act-btn" data-action="jump">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V6"/><path d="M6 11l6-6 6 6"/><path d="M4 21h16" stroke-dasharray="2.5 3"/></svg>
+              Jump
+            </button>
+            <button type="button" class="act-btn" data-action="laugh">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M7.5 13.5c1.2 2.4 2.7 3.5 4.5 3.5s3.3-1.1 4.5-3.5"/><path d="M8.5 9.2c.6-.7 1.4-.7 2 0M13.5 9.2c.6-.7 1.4-.7 2 0"/></svg>
+              Big laugh
+            </button>
+            <button type="button" class="act-btn" data-action="pointL">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12H8"/><path d="M13 6l-6 6 6 6"/></svg>
+              Point left
+            </button>
+            <button type="button" class="act-btn" data-action="pointR">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h13"/><path d="M11 6l6 6-6 6"/></svg>
+              Point right
+            </button>
+            <button type="button" class="act-btn" data-action="smile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14c1.1 1.8 2.4 2.6 4 2.6s2.9-.8 4-2.6"/><circle cx="9" cy="9.5" r=".6" fill="currentColor"/><circle cx="15" cy="9.5" r=".6" fill="currentColor"/></svg>
+              Big smile
+            </button>
+            <button type="button" class="act-btn" data-action="dance">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l10-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>
+              Dance
+            </button>
+            <button type="button" class="act-btn" data-action="confused">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.3c.3-1 1.2-1.6 2.3-1.6 1.3 0 2.2.8 2.2 1.9 0 1.5-2 1.6-2 3"/><circle cx="12" cy="16.4" r=".6" fill="currentColor"/><path d="M8.5 18.2c1.2-.5 2.4-.5 3.5.2" transform="translate(2.5 -1.4)"/></svg>
+              Confused
+            </button>
+            <button type="button" class="act-btn" data-action="sleepy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.5A8.5 8.5 0 1 1 10.5 4 6.8 6.8 0 0 0 20 13.5Z"/></svg>
+              Sleepy
+            </button>
+            <button type="button" class="act-btn" data-action="surprise">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.8" r=".7" fill="currentColor"/><circle cx="15" cy="9.8" r=".7" fill="currentColor"/><ellipse cx="12" cy="15.8" rx="2" ry="2.6"/></svg>
+              Surprise!
+            </button>
+            <button type="button" class="act-btn" data-action="cheer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M5.6 5.6l2.1 2.1M18.4 5.6l-2.1 2.1"/><path d="M7 21v-6l5-4 5 4v6"/><path d="M10 21v-4h4v4"/></svg>
+              Cheer
+            </button>
+            <button type="button" class="act-btn primary" data-action="joke">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.6L18 9l-4.3 1.4L12 15l-1.7-4.6L6 9l4.3-1.4Z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8Z"/></svg>
+              Tell a joke
+            </button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-items">
+          <h2 id="h-items">Lesson items</h2>
+          <p class="hint">These sit on the floor in front of Giggles. Tap one and he picks it up, holds it, and says its line — tap it again to put it back down. Edit the list below whenever the lesson changes; the stage updates by itself.</p>
+          <div class="item-btns" id="itemBtns"></div>
+          <div id="itemRows"></div>
+          <button type="button" class="add-item-btn" id="addItemBtn">+ Add an item</button>
+        </section>
+
+        <section class="card" aria-labelledby="h-voice">
+          <h2 id="h-voice">Your voice, changed</h2>
+          <p class="hint">Talk into the controller and Giggles answers from the board in the funny voice — his mouth is driven by the sound actually coming out of the speaker, so the lip sync matches. When you're linked, you won't hear yourself on the controller (that stops feedback squeal); the class hears you from the board.</p>
+          <div class="mic-row">
+            <button type="button" class="mic-btn" id="micBtn">Start microphone</button>
+            <span class="mic-status" id="micStatus">Microphone is off</span>
+          </div>
+          <div class="meter" aria-hidden="true"><div id="meterFill"></div></div>
+          <div class="seg" role="group" aria-label="Funny voice" style="margin-top:.6rem">
+            <button type="button" data-voice="monster" aria-pressed="true">Monster</button>
+            <button type="button" data-voice="robot" aria-pressed="false">Robot</button>
+            <button type="button" data-voice="squeaky" aria-pressed="false">Squeaky</button>
+            <button type="button" data-voice="normal" aria-pressed="false">Just me</button>
+          </div>
+          <div class="slider-row">
+            <label for="sens">Mouth size</label>
+            <input type="range" id="sens" min="2" max="14" step="0.5" value="7" />
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-speak">
+          <h2 id="h-speak">No mic? Giggles can talk</h2>
+          <p class="hint">Backup plan: tap a line, or type your own, and the <em>stage</em> device says it out loud in the voice picked above while Giggles lip-syncs along.</p>
+          <div class="phrase-grid" id="phraseGrid">
+            <button type="button" class="phrase">Hello, friends!</button>
+            <button type="button" class="phrase">Who has a joke for me?</button>
+            <button type="button" class="phrase">That was SO funny!</button>
+            <button type="button" class="phrase">Great job, everybody!</button>
+            <button type="button" class="phrase">Ooh, good question!</button>
+            <button type="button" class="phrase">Let's all wiggle!</button>
+          </div>
+          <div class="speak-row">
+            <input type="text" id="sayInput" placeholder="Type something for Giggles to say…" maxlength="140" />
+            <button type="button" class="speak-btn" id="sayBtn">Say it</button>
+          </div>
+        </section>
+
+        <section class="card" aria-labelledby="h-sfx">
+          <h2 id="h-sfx">Sound effects</h2>
+          <p class="hint">A little cartoon noise goes a long way with five-year-olds. These play on the stage.</p>
+          <div class="sfx-grid">
+            <button type="button" class="sfx-btn" data-sfx="boing">Boing</button>
+            <button type="button" class="sfx-btn" data-sfx="giggle">Giggle</button>
+            <button type="button" class="sfx-btn" data-sfx="tada">Ta-dah!</button>
+            <button type="button" class="sfx-btn" data-sfx="drum">Drum sting</button>
+          </div>
+        </section>
+
+        <details class="help">
+          <summary>How to run it in the classroom</summary>
+          <ol>
+            <li><strong>One-time setup (each device):</strong> tap <em>Link devices</em>. If linking isn't set up yet, follow the short Firebase steps — free project on your school Google account, paste the config once, done.</li>
+            <li><strong>Board device:</strong> open this page, tap <em>Link devices</em>, choose <em>Stage</em>, type the room code, tap <em>Join room</em>. Then AirPlay to the board and tap <em>Full screen</em>. Giggles fills the board with no buttons in the way.</li>
+            <li><strong>Controller iPad:</strong> same page, choose <em>Controller</em>, same room code, <em>Join room</em>. When the pill at the top turns green and says <strong>Linked</strong>, you're connected — check for that green pill <em>before</em> the lesson, on the school network.</li>
+            <li><strong>Voice:</strong> on the controller, tap <em>Start microphone</em> and allow mic access. Pick Monster, Robot, or Squeaky. Your voice comes out of the board device's speaker, changed, and Giggles' mouth follows the sound itself.</li>
+            <li><strong>Lesson items:</strong> edit the list on the controller — names, pictures, and the line Giggles says. The stage picks up the changes on its own.</li>
+          </ol>
+          <p><strong>Seeing the class:</strong> for the first run, use a Google Meet call. Put a spare iPad near the board facing the students, join the Meet from it and from your controller iPad, then on the board iPad turn the volume all the way down and the brightness all the way down (or face it away) so the class sees and hears nothing from it. There's no camera built into this page yet — Meet is the stand-in while we test the link.</p>
+          <p><strong>If the pill stays yellow:</strong> the two devices can see Firebase but not each other yet — give it a few seconds, confirm both typed the same room code, and check both picked different roles. If buttons work but the live voice won't connect, the school network may be blocking direct device-to-device audio; the moves, jokes, items, and typed lines still work, and the typed lines become the voice for that lesson.</p>
+          <p><strong>Keyboard shortcuts</strong> (handy on a MacBook controller): <kbd>1</kbd> wave, <kbd>2</kbd> jump, <kbd>3</kbd> laugh, <kbd>4</kbd>/<kbd>5</kbd> point, <kbd>6</kbd> smile, <kbd>7</kbd> dance, <kbd>8</kbd> confused, <kbd>9</kbd> sleepy, <kbd>0</kbd> surprise.</p>
+        </details>
+      </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        var svg = document.getElementById("giggles");
+        var stage = document.getElementById("stage");
+        var charWrap = document.getElementById("charWrap");
+        var bubble = document.getElementById("bubble");
+        var mouthPath = document.getElementById("mouthPath");
+        var mouthClipPath = document.getElementById("mouthClipPath");
+        var teeth = document.getElementById("teeth");
+        var tongue = document.getElementById("tongue");
+        var sens = document.getElementById("sens");
+
+        /* ---------------- shared audio context + output analysers ----------------
+           Lip sync rule: Giggles' mouth is driven by the audio that is actually
+           being played on THIS device — the processed mic output in local mode,
+           or the WebRTC voice arriving from the controller on the stage. */
+        var actx = null;
+        function ensureCtx() {
+          if (!actx) {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) actx = new AC();
+          }
+          if (actx && actx.state === "suspended") actx.resume();
+          return actx;
+        }
+        var outAnalyser = null;      // local processed-voice output (controller / single device)
+        var remoteAnalyser = null;   // WebRTC voice received by the stage
+        var levelData = new Uint8Array(512);
+        function rmsOf(an) {
+          if (!an) return 0;
+          an.getByteTimeDomainData(levelData);
+          var sum = 0;
+          for (var i = 0; i < levelData.length; i++) {
+            var v = (levelData[i] - 128) / 128;
+            sum += v * v;
+          }
+          return Math.sqrt(sum / levelData.length);
+        }
+        function playLevel() {
+          var rms = 0;
+          if (remoteAnalyser) rms = rmsOf(remoteAnalyser);
+          else if (outAnalyser && micOn) rms = rmsOf(outAnalyser);
+          if (!rms) return 0;
+          var scaled = Math.min(1, rms * parseFloat(sens.value) * 1.5);
+          return Math.pow(scaled, 0.75); // exaggerate: quiet sounds still open the mouth
+        }
+
+        /* ---------------- expression + mouth ---------------- */
+        var MOUTH_CX = 210, MOUTH_CY = 258;
+        var expr = "smile";           // smile | laugh | confused | sleepy | surprised
+        var exprSticky = false;
+        var exprUntil = 0;
+        var mouthOpen = 0.12;
+        var speaking = false;         // TTS in progress (stage-side typed lines)
+        var bubbleTimer = null;
+
+        var BASE_OPEN = { smile: 0.12, laugh: 0.9, confused: 0.34, sleepy: 0.05, surprised: 0.55 };
+
+        function setExpr(name, ms, sticky) {
+          expr = name;
+          exprSticky = !!sticky;
+          exprUntil = ms ? performance.now() + ms : 0;
+          svg.setAttribute("data-expr", name);
+          stage.setAttribute("data-state", name === "sleepy" ? "sleepy" : (stage.getAttribute("data-state") === "dance" ? "dance" : "idle"));
+        }
+
+        function showBubble(text, ms, bigQ) {
+          bubble.textContent = text;
+          bubble.classList.toggle("big-q", !!bigQ);
+          bubble.classList.add("show");
+          if (bubbleTimer) clearTimeout(bubbleTimer);
+          if (ms !== 0) {
+            bubbleTimer = setTimeout(function () { bubble.classList.remove("show"); }, ms || 2600);
+          }
+        }
+        function hideBubble() { bubble.classList.remove("show"); }
+
+        function renderMouth(now) {
+          if (!exprSticky && exprUntil && now > exprUntil && expr !== "smile") {
+            setExpr("smile", 0);
+            svg.setAttribute("data-look", "center");
+          }
+          var target = BASE_OPEN[expr] || 0.12;
+          var lvl = playLevel();
+          if (lvl > target) target = lvl;
+          if (speaking) {
+            var flap = Math.abs(Math.sin(now * 0.021)) * (0.5 + 0.35 * Math.sin(now * 0.0053 + 1.7));
+            flap = Math.max(0.1, Math.min(0.98, flap));
+            if (flap > target) target = flap;
+          }
+          // fast attack, slightly slower release — snappy, exaggerated lip sync
+          var k = target > mouthOpen ? 0.62 : 0.3;
+          mouthOpen += (target - mouthOpen) * k;
+          if (mouthOpen < 0.01) mouthOpen = 0.01;
+
+          var w = expr === "confused" ? 20 + mouthOpen * 8 : 33 + mouthOpen * 9;
+          var h = 5 + mouthOpen * 40;
+          var lift = expr === "smile" ? -7 : (expr === "laugh" ? -4 : 0);
+          var topY = MOUTH_CY - h * 0.38;
+          var d = "M " + (MOUTH_CX - w) + " " + (MOUTH_CY + lift) +
+                  " Q " + MOUTH_CX + " " + (MOUTH_CY + h + 7) + " " + (MOUTH_CX + w) + " " + (MOUTH_CY + lift) +
+                  " Q " + MOUTH_CX + " " + topY + " " + (MOUTH_CX - w) + " " + (MOUTH_CY + lift) + " Z";
+          mouthPath.setAttribute("d", d);
+          mouthClipPath.setAttribute("d", d);
+          teeth.setAttribute("y", topY - 1);
+          teeth.setAttribute("x", MOUTH_CX - w * 0.72);
+          teeth.setAttribute("width", w * 1.44);
+          tongue.setAttribute("cy", MOUTH_CY + h * 0.6);
+          tongue.setAttribute("rx", w * 0.58);
+          tongue.setAttribute("ry", 3 + mouthOpen * 8);
+          tongue.setAttribute("opacity", mouthOpen > 0.22 ? "1" : "0");
+          requestAnimationFrame(renderMouth);
+        }
+        requestAnimationFrame(renderMouth);
+
+        /* ---------------- sound effects (synthesized) ---------------- */
+        function tone(freqA, freqB, t0, dur, type, vol) {
+          var o = actx.createOscillator(), g = actx.createGain();
+          o.type = type || "sine";
+          o.frequency.setValueAtTime(freqA, t0);
+          if (freqB) o.frequency.exponentialRampToValueAtTime(Math.max(30, freqB), t0 + dur);
+          g.gain.setValueAtTime(0.0001, t0);
+          g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          o.connect(g); g.connect(actx.destination);
+          o.start(t0); o.stop(t0 + dur + 0.05);
+        }
+        function noiseBurst(t0, dur, vol, freq) {
+          var len = Math.floor(actx.sampleRate * dur);
+          var buf = actx.createBuffer(1, len, actx.sampleRate);
+          var data = buf.getChannelData(0);
+          for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+          var src = actx.createBufferSource(); src.buffer = buf;
+          var f = actx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq || 1200; f.Q.value = 0.8;
+          var g = actx.createGain(); g.gain.value = vol;
+          src.connect(f); f.connect(g); g.connect(actx.destination);
+          src.start(t0);
+        }
+        var SFX = {
+          boing: function () { if (!ensureCtx()) return; var t = actx.currentTime; tone(320, 70, t, 0.5, "sine", 0.5); tone(640, 140, t, 0.5, "triangle", 0.18); },
+          giggle: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            for (var i = 0; i < 6; i++) {
+              var st = t + i * 0.13, f = 480 + Math.random() * 160;
+              tone(f, f * 0.82, st, 0.1, "sawtooth", 0.12);
+              tone(f * 2, f * 1.7, st, 0.08, "sine", 0.1);
+            }
+          },
+          tada: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            [523, 659, 784, 1047].forEach(function (f, i) { tone(f, null, t + i * 0.09, 0.34, "triangle", 0.3); });
+            tone(1319, null, t + 0.38, 0.5, "triangle", 0.22);
+          },
+          drum: function () {
+            if (!ensureCtx()) return; var t = actx.currentTime;
+            for (var i = 0; i < 14; i++) noiseBurst(t + i * 0.055, 0.05, 0.16, 1800);
+            tone(196, null, t + 0.82, 0.3, "square", 0.16);
+            tone(147, null, t + 0.82, 0.36, "square", 0.16);
+            noiseBurst(t + 0.82, 0.3, 0.2, 5000);
+          }
+        };
+
+        /* ---------------- text to speech (typed-line backup) ---------------- */
+        var voiceMode = "monster";
+        var VOICE_TTS = {
+          monster: { pitch: 0.4, rate: 0.88 },
+          robot:   { pitch: 0.85, rate: 0.95 },
+          squeaky: { pitch: 1.9, rate: 1.08 },
+          normal:  { pitch: 1.1, rate: 1.0 }
+        };
+        function speak(text, after, voiceOverride) {
+          showBubble(text, 0);
+          if (!("speechSynthesis" in window)) { hideBubble(); if (after) after(); return; }
+          window.speechSynthesis.cancel();
+          var u = new SpeechSynthesisUtterance(text);
+          var v = VOICE_TTS[voiceOverride || voiceMode] || VOICE_TTS.monster;
+          u.pitch = v.pitch; u.rate = v.rate; u.volume = 1;
+          speaking = true;
+          var done = function () { speaking = false; hideBubble(); if (after) after(); };
+          u.onend = done;
+          u.onerror = done;
+          window.speechSynthesis.speak(u);
+          setTimeout(function () { if (speaking && !window.speechSynthesis.speaking) { speaking = false; hideBubble(); } }, Math.max(2500, text.length * 220));
+        }
+
+        /* ---------------- jokes ---------------- */
+        var JOKES = [
+          ["Why did the teddy bear say no to dessert?", "Because she was stuffed!"],
+          ["What do you call a fish with no eyes?", "A fsh!"],
+          ["Why did the cookie go to the doctor?", "Because he felt crumby!"],
+          ["What do you call cheese that is not yours?", "Nacho cheese!"],
+          ["Why do cows wear bells?", "Because their horns don't work!"],
+          ["What did the ocean say to the beach?", "Nothing — it just waved!"]
+        ];
+        var lastJoke = -1;
+        function tellJoke() {
+          var i;
+          do { i = Math.floor(Math.random() * JOKES.length); } while (i === lastJoke);
+          lastJoke = i;
+          speak(JOKES[i][0], function () {
+            setTimeout(function () {
+              speak(JOKES[i][1], function () { doAction("laugh"); });
+            }, 650);
+          });
+        }
+
+        /* ---------------- actions ---------------- */
+        var animTimers = [];
+        function clearAnims() {
+          animTimers.forEach(clearTimeout); animTimers = [];
+          charWrap.classList.remove("anim-jump", "anim-laugh", "anim-dance", "anim-lean-l", "anim-lean-r", "anim-surprise");
+          void charWrap.offsetWidth;
+        }
+        function later(fn, ms) { animTimers.push(setTimeout(fn, ms)); }
+
+        function doAction(name) {
+          ensureCtx();
+          if (name !== "sleepy" && expr === "sleepy") setExpr("smile", 0);
+          if (stage.getAttribute("data-state") === "dance" && name !== "dance") stage.setAttribute("data-state", "idle");
+
+          switch (name) {
+            case "wave":
+              svg.setAttribute("data-arm", "wave");
+              setExpr("smile", 1500);
+              showBubble("Hello, friends!", 1500);
+              later(function () { if (heldId === null) svg.setAttribute("data-arm", "rest"); }, 1550);
+              break;
+            case "jump":
+              clearAnims(); charWrap.classList.add("anim-jump");
+              setExpr("surprised", 700);
+              later(function () { SFX.boing(); }, 300);
+              later(function () { charWrap.classList.remove("anim-jump"); }, 760);
+              break;
+            case "laugh":
+              clearAnims(); charWrap.classList.add("anim-laugh");
+              setExpr("laugh", 1500);
+              SFX.giggle();
+              later(function () { charWrap.classList.remove("anim-laugh"); }, 1550);
+              break;
+            case "pointL":
+              clearAnims(); charWrap.classList.add("anim-lean-l");
+              svg.setAttribute("data-arm", "pointL"); svg.setAttribute("data-look", "left");
+              setExpr("smile", 1300);
+              later(function () { svg.setAttribute("data-arm", heldId !== null ? "hold" : "rest"); charWrap.classList.remove("anim-lean-l"); }, 1350);
+              break;
+            case "pointR":
+              clearAnims(); charWrap.classList.add("anim-lean-r");
+              svg.setAttribute("data-arm", "pointR"); svg.setAttribute("data-look", "right");
+              setExpr("smile", 1300);
+              later(function () { svg.setAttribute("data-arm", heldId !== null ? "hold" : "rest"); charWrap.classList.remove("anim-lean-r"); }, 1350);
+              break;
+            case "smile":
+              setExpr("smile", 2400);
+              showBubble("Cheese!", 1600);
+              break;
+            case "dance":
+              clearAnims(); charWrap.classList.add("anim-dance");
+              stage.setAttribute("data-state", "dance");
+              svg.setAttribute("data-arm", "bothup");
+              setExpr("laugh", 2800);
+              later(function () {
+                charWrap.classList.remove("anim-dance");
+                svg.setAttribute("data-arm", heldId !== null ? "hold" : "rest");
+                stage.setAttribute("data-state", "idle");
+              }, 2850);
+              break;
+            case "confused":
+              setExpr("confused", 2600);
+              showBubble("?", 2400, true);
+              break;
+            case "sleepy":
+              setExpr("sleepy", 0, true);
+              svg.setAttribute("data-arm", "rest");
+              break;
+            case "surprise":
+              clearAnims(); charWrap.classList.add("anim-surprise");
+              setExpr("surprised", 1300);
+              showBubble("Wow!", 1200);
+              later(function () { charWrap.classList.remove("anim-surprise"); }, 850);
+              break;
+            case "cheer":
+              svg.setAttribute("data-arm", "bothup");
+              setExpr("laugh", 1400);
+              SFX.tada();
+              later(function () { svg.setAttribute("data-arm", heldId !== null ? "hold" : "rest"); }, 1450);
+              break;
+            case "joke":
+              tellJoke();
+              break;
+          }
+        }
+
+        /* ---------------- lesson items (props) ---------------- */
+        var SHAPES = {
+          ball:     { label: "Ball",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="#e4572e"/><path d="M10 22 Q 32 34 54 22" stroke="#ffffff" stroke-width="5" fill="none" opacity=".6"/><circle cx="22" cy="20" r="7" fill="#ffffff" opacity=".35"/></svg>' },
+          cube:     { label: "Cube",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,6 56,18 32,30 8,18" fill="#ffd166"/><polygon points="8,18 32,30 32,58 8,46" fill="#f4a259"/><polygon points="56,18 32,30 32,58 56,46" fill="#e4572e"/></svg>' },
+          pyramid:  { label: "Pyramid",  svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,7 58,55 32,55" fill="#ffd166"/><polygon points="32,7 6,55 32,55" fill="#eda71f"/></svg>' },
+          cylinder: { label: "Cylinder", svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="14" width="36" height="38" fill="#0e7c86"/><ellipse cx="32" cy="14" rx="18" ry="6" fill="#45b7bf"/><ellipse cx="32" cy="52" rx="18" ry="6" fill="#0a5a61"/></svg>' },
+          cone:     { label: "Cone",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,6 50,50 14,50" fill="#ef6f8b"/><ellipse cx="32" cy="50" rx="18" ry="5" fill="#d14d6d"/></svg>' },
+          star:     { label: "Star",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><polygon points="32,5 39,24 59,24 43,36 49,56 32,44 15,56 21,36 5,24 25,24" fill="#ffd166" stroke="#f0a51f" stroke-width="2"/></svg>' },
+          heart:    { label: "Heart",    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 56 C 8 38 8 16 22 12 C 28 10 32 15 32 19 C 32 15 36 10 42 12 C 56 16 56 38 32 56 Z" fill="#e4572e"/></svg>' },
+          moon:     { label: "Moon",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M42 6 A 26 26 0 1 0 58 42 A 20 20 0 0 1 42 6 Z" fill="#ffd166"/></svg>' },
+          apple:    { label: "Apple",    svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 22 C 26 12 12 14 12 30 C 12 46 24 58 32 54 C 40 58 52 46 52 30 C 52 14 38 12 32 22 Z" fill="#c1272d"/><path d="M32 20 C 32 12 36 8 42 7 C 42 14 38 19 32 20 Z" fill="#1e9e62"/><rect x="30" y="10" width="4" height="10" rx="2" fill="#6b4423"/></svg>' },
+          book:     { label: "Book",     svg: '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="10" width="40" height="46" rx="4" fill="#0e7c86"/><rect x="18" y="10" width="6" height="46" fill="#0a5a61"/><rect x="28" y="20" width="18" height="4" rx="2" fill="#ffffff" opacity=".7"/><rect x="28" y="28" width="18" height="4" rx="2" fill="#ffffff" opacity=".7"/></svg>' }
+        };
+        var DEFAULT_ITEMS = [
+          { id: "ball",    name: "Ball",    shape: "ball",    line: "This is a ball! A ball is a sphere — round all over, so it can roll and roll!" },
+          { id: "cube",    name: "Cube",    shape: "cube",    line: "This is a cube! It has 6 faces, and every face is a square." },
+          { id: "pyramid", name: "Pyramid", shape: "pyramid", line: "This is a pyramid! It has a square on the bottom and triangles on the sides." }
+        ];
+        var items = DEFAULT_ITEMS.slice();
+        var heldId = null;
+        var propsRow = document.getElementById("propsRow");
+        var heldProp = document.getElementById("heldProp");
+        var itemBtns = document.getElementById("itemBtns");
+        var itemRows = document.getElementById("itemRows");
+        var ctrlHeldId = null; // what the controller last asked the stage to hold
+
+        function findItem(id) {
+          for (var i = 0; i < items.length; i++) if (items[i].id === id) return items[i];
+          return null;
+        }
+        function renderProps() {
+          propsRow.innerHTML = "";
+          items.forEach(function (it) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "prop" + (heldId === it.id ? " held" : "");
+            b.setAttribute("aria-label", it.name);
+            b.innerHTML = (SHAPES[it.shape] || SHAPES.ball).svg + "<span></span>";
+            b.querySelector("span").textContent = it.name;
+            b.addEventListener("click", function () { dispatchHold(it.id); });
+            propsRow.appendChild(b);
+          });
+          var held = heldId ? findItem(heldId) : null;
+          if (held) {
+            heldProp.innerHTML = (SHAPES[held.shape] || SHAPES.ball).svg;
+            heldProp.hidden = false;
+          } else {
+            heldProp.hidden = true;
+            heldProp.innerHTML = "";
+          }
+          renderItemBtns();
+        }
+        function holdItem(id) {
+          var it = findItem(id);
+          if (!it) return;
+          heldId = id;
+          svg.setAttribute("data-arm", "hold");
+          setExpr("smile", 1200);
+          renderProps();
+          heldProp.classList.remove("pop"); void heldProp.offsetWidth; heldProp.classList.add("pop");
+          if (it.line) showBubble(it.line, 5000);
+        }
+        function putDown() {
+          heldId = null;
+          svg.setAttribute("data-arm", "rest");
+          hideBubble();
+          renderProps();
+        }
+        function setItems(list) {
+          if (!list || !list.length) return;
+          items = list.filter(function (it) { return it && it.id && SHAPES[it.shape]; }).slice(0, 6);
+          if (!items.length) items = DEFAULT_ITEMS.slice();
+          if (heldId && !findItem(heldId)) { heldId = null; svg.setAttribute("data-arm", "rest"); }
+          renderProps();
+          renderEditor();
+        }
+        function renderItemBtns() {
+          itemBtns.innerHTML = "";
+          items.forEach(function (it) {
+            var isHeld = (role === "controller" && joined) ? ctrlHeldId === it.id : heldId === it.id;
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = "act-btn" + (isHeld ? " holding" : "");
+            b.innerHTML = (SHAPES[it.shape] || SHAPES.ball).svg + "<span></span>";
+            b.querySelector("span").textContent = (isHeld ? "Put down: " : "Pick up: ") + it.name;
+            b.addEventListener("click", function () { dispatchHold(it.id); });
+            itemBtns.appendChild(b);
+          });
+        }
+        var syncTimer = null;
+        function itemsChanged() {
+          try { localStorage.setItem("lf_items", JSON.stringify(items)); } catch (e) {}
+          renderProps();
+          clearTimeout(syncTimer);
+          syncTimer = setTimeout(function () {
+            if (joined && role === "controller") sendCmd("items", { items: items });
+          }, 400);
+        }
+        function renderEditor() {
+          itemRows.innerHTML = "";
+          items.forEach(function (it, idx) {
+            var row = document.createElement("div");
+            row.className = "item-row";
+            var r1 = document.createElement("div"); r1.className = "r1";
+            var nameIn = document.createElement("input");
+            nameIn.type = "text"; nameIn.value = it.name; nameIn.maxLength = 24;
+            nameIn.setAttribute("aria-label", "Item name");
+            var sel = document.createElement("select");
+            sel.setAttribute("aria-label", "Item picture");
+            Object.keys(SHAPES).forEach(function (key) {
+              var opt = document.createElement("option");
+              opt.value = key; opt.textContent = SHAPES[key].label;
+              if (key === it.shape) opt.selected = true;
+              sel.appendChild(opt);
+            });
+            var del = document.createElement("button");
+            del.type = "button"; del.className = "del"; del.textContent = "Remove";
+            del.disabled = items.length <= 1;
+            r1.appendChild(nameIn); r1.appendChild(sel); r1.appendChild(del);
+            var say = document.createElement("input");
+            say.type = "text"; say.className = "say-line"; say.value = it.line || ""; say.maxLength = 160;
+            say.placeholder = "What Giggles says while holding it…";
+            say.setAttribute("aria-label", "What Giggles says");
+            row.appendChild(r1); row.appendChild(say);
+            itemRows.appendChild(row);
+            nameIn.addEventListener("input", function () { it.name = nameIn.value; itemsChanged(); });
+            sel.addEventListener("change", function () { it.shape = sel.value; itemsChanged(); });
+            say.addEventListener("input", function () { it.line = say.value; itemsChanged(); });
+            del.addEventListener("click", function () {
+              if (heldId === it.id) putDown();
+              items.splice(idx, 1);
+              renderEditor(); itemsChanged();
+            });
+          });
+        }
+        document.getElementById("addItemBtn").addEventListener("click", function () {
+          if (items.length >= 6) return;
+          items.push({ id: "item" + Date.now(), name: "New item", shape: "star", line: "" });
+          renderEditor(); itemsChanged();
+        });
+
+        /* ---------------- view switch + fullscreen ---------------- */
+        function setView(v) {
+          document.body.setAttribute("data-view", v);
+          document.querySelectorAll("[data-setview]").forEach(function (b) {
+            b.setAttribute("aria-pressed", b.getAttribute("data-setview") === v ? "true" : "false");
+          });
+        }
+        document.querySelectorAll("[data-setview]").forEach(function (btn) {
+          btn.addEventListener("click", function () { setView(btn.getAttribute("data-setview")); });
+        });
+        document.getElementById("fsBtn").addEventListener("click", function () {
+          try {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen();
+          } catch (err) { /* fullscreen not available in this frame */ }
+        });
+        // tapping the stage wakes its audio (needed before remote voice can play)
+        stage.addEventListener("pointerdown", function () {
+          ensureCtx();
+          document.getElementById("soundBtn").hidden = true;
+        });
+        document.getElementById("soundBtn").addEventListener("click", function () {
+          ensureCtx();
+          this.hidden = true;
+        });
+
+        /* ---------------- microphone + voice changer ----------------
+           The old version used ring modulation alone, which barely changed the
+           voice. Now Monster and Squeaky use a real pitch shifter (two
+           crossfaded delay lines) plus growl/distortion, so the voices are
+           clearly different and Monster actually sounds like a monster. */
+        var micBtn = document.getElementById("micBtn");
+        var micStatus = document.getElementById("micStatus");
+        var meterFill = document.getElementById("meterFill");
+        var micOn = false, micStream = null, micSource = null, micAnalyser = null;
+        var chainNodes = [], chainInput = null, masterOut = null, monitorGain = null, streamDest = null;
+        var meterData = null;
+
+        function trackNode(n) { chainNodes.push(n); return n; }
+        function ringMod(freq, type) {
+          var g = actx.createGain(); g.gain.value = 0;
+          var osc = actx.createOscillator(); osc.type = type || "sine"; osc.frequency.value = freq;
+          var og = actx.createGain(); og.gain.value = 1;
+          osc.connect(og); og.connect(g.gain);
+          osc.start();
+          trackNode(osc); trackNode(og); trackNode(g);
+          return g;
+        }
+        function filter(type, freq, q) {
+          var f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q || 0.7;
+          trackNode(f);
+          return f;
+        }
+        function plainGain(v) {
+          var g = actx.createGain(); g.gain.value = v;
+          trackNode(g);
+          return g;
+        }
+        function growl(amount) {
+          var shaper = actx.createWaveShaper();
+          var curve = new Float32Array(256);
+          for (var i = 0; i < 256; i++) { var x = i / 128 - 1; curve[i] = Math.tanh(amount * x); }
+          shaper.curve = curve;
+          trackNode(shaper);
+          return shaper;
+        }
+        /* Pitch shifter from plain Web Audio nodes: one sawtooth drives two
+           delay lines half a cycle apart; triangle crossfades hide the wraps.
+           ratio < 1 lowers the pitch, > 1 raises it. */
+        function makePitchShifter(ratio) {
+          var W = 0.055; // delay window, seconds
+          var slope = 1 - ratio;
+          var freq = Math.abs(slope) / W;
+          var dir = slope >= 0 ? 1 : -1;
+          var input = actx.createGain(), output = actx.createGain();
+          trackNode(input); trackNode(output);
+          var osc = actx.createOscillator(); osc.type = "sawtooth"; osc.frequency.value = freq;
+          var dirGain = actx.createGain(); dirGain.gain.value = dir;
+          osc.connect(dirGain);
+          trackNode(osc); trackNode(dirGain);
+          // delay A: (x+1)/2 * W
+          var dScale = actx.createGain(); dScale.gain.value = W / 2;
+          var dOff = actx.createConstantSource(); dOff.offset.value = W / 2;
+          var delayA = actx.createDelay(0.2); delayA.delayTime.value = W / 2;
+          dirGain.connect(dScale); dScale.connect(delayA.delayTime);
+          dOff.connect(delayA.delayTime);
+          trackNode(dScale); trackNode(dOff); trackNode(delayA);
+          // delay B: same ramp, half a cycle later, via waveshaper
+          var shB = actx.createWaveShaper();
+          var curveB = new Float32Array(1024);
+          for (var i = 0; i < 1024; i++) {
+            var bx = i / 511.5 - 1;
+            var u = (bx + 1) / 2;
+            curveB[i] = (u < 0.5 ? u + 0.5 : u - 0.5) * W;
+          }
+          shB.curve = curveB;
+          var delayB = actx.createDelay(0.2); delayB.delayTime.value = W / 2;
+          dirGain.connect(shB); shB.connect(delayB.delayTime);
+          trackNode(shB); trackNode(delayB);
+          // crossfade gains: gA = 1-|x|, gB = |x|
+          var shGA = actx.createWaveShaper(), shGB = actx.createWaveShaper();
+          var cA = new Float32Array(1024), cB = new Float32Array(1024);
+          for (var j = 0; j < 1024; j++) {
+            var gx = j / 511.5 - 1;
+            cA[j] = 1 - Math.abs(gx);
+            cB[j] = Math.abs(gx);
+          }
+          shGA.curve = cA; shGB.curve = cB;
+          var gA = actx.createGain(); gA.gain.value = 0.5;
+          var gB = actx.createGain(); gB.gain.value = 0.5;
+          dirGain.connect(shGA); shGA.connect(gA.gain);
+          dirGain.connect(shGB); shGB.connect(gB.gain);
+          trackNode(shGA); trackNode(shGB); trackNode(gA); trackNode(gB);
+          input.connect(delayA); delayA.connect(gA); gA.connect(output);
+          input.connect(delayB); delayB.connect(gB); gB.connect(output);
+          osc.start(); dOff.start();
+          return { input: input, output: output };
+        }
+        function teardownChain() {
+          chainNodes.forEach(function (n) {
+            try { n.disconnect(); } catch (e) {}
+            if (n.stop) { try { n.stop(); } catch (e) {} }
+          });
+          chainNodes = [];
+        }
+        function buildChain() {
+          teardownChain();
+          if (!chainInput || !masterOut) return;
+          var node = chainInput, next;
+          function link(n) { node.connect(n); node = n; }
+          if (voiceMode === "monster") {
+            var sh = makePitchShifter(0.55);       // deep: pitch drops to ~55%
+            link(sh.input); node = sh.output;
+            link(growl(2.6));                      // snarl
+            link(filter("lowpass", 720, 0.6));     // big and heavy
+            link(plainGain(1.6));
+          } else if (voiceMode === "robot") {
+            link(ringMod(28, "square"));
+            link(filter("bandpass", 950, 0.8));
+            link(growl(1.4));
+            link(plainGain(1.5));
+          } else if (voiceMode === "squeaky") {
+            var sh2 = makePitchShifter(1.75);      // chipmunk-high
+            link(sh2.input); node = sh2.output;
+            link(filter("highpass", 280, 0.7));
+            link(plainGain(1.3));
+          }
+          node.connect(masterOut);
+        }
+        function updateMonitor() {
+          if (!monitorGain) return;
+          // linked controller: voice goes to the stage only (no local echo = no squeal)
+          monitorGain.gain.value = (joined && role === "controller") ? 0 : 0.9;
+        }
+
+        function meterLoop() {
+          if (!micOn || !micAnalyser) { meterFill.style.width = "0%"; return; }
+          micAnalyser.getByteTimeDomainData(meterData);
+          var sum = 0;
+          for (var i = 0; i < meterData.length; i++) {
+            var v = (meterData[i] - 128) / 128;
+            sum += v * v;
+          }
+          var rms = Math.sqrt(sum / meterData.length);
+          meterFill.style.width = Math.min(100, rms * parseFloat(sens.value) * 55) + "%";
+          requestAnimationFrame(meterLoop);
+        }
+
+        function stopMic() {
+          micOn = false;
+          if (micStream) micStream.getTracks().forEach(function (t) { t.stop(); });
+          micStream = null;
+          [micSource, chainInput, masterOut, monitorGain].forEach(function (n) { if (n) { try { n.disconnect(); } catch (e) {} } });
+          teardownChain();
+          outAnalyser = null;
+          meterFill.style.width = "0%";
+          micBtn.textContent = "Start microphone";
+          micBtn.classList.remove("live");
+          micStatus.textContent = "Microphone is off";
+        }
+
+        micBtn.addEventListener("click", function () {
+          if (micOn) { stopMic(); return; }
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            micStatus.textContent = "This browser can't use a microphone here — try the typed lines below instead.";
+            return;
+          }
+          ensureCtx();
+          navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false } })
+            .then(function (stream) {
+              micStream = stream;
+              micSource = actx.createMediaStreamSource(stream);
+              micAnalyser = actx.createAnalyser();
+              micAnalyser.fftSize = 512;
+              meterData = new Uint8Array(micAnalyser.fftSize);
+              chainInput = actx.createGain(); chainInput.gain.value = 1;
+              masterOut = actx.createGain(); masterOut.gain.value = 1;
+              outAnalyser = actx.createAnalyser(); outAnalyser.fftSize = 512;
+              monitorGain = actx.createGain();
+              streamDest = actx.createMediaStreamDestination();
+              masterOut.connect(outAnalyser);
+              outAnalyser.connect(monitorGain);
+              monitorGain.connect(actx.destination);
+              masterOut.connect(streamDest); // processed voice, ready for WebRTC
+              micSource.connect(micAnalyser);
+              micSource.connect(chainInput);
+              buildChain();
+              updateMonitor();
+              micOn = true;
+              micBtn.textContent = "Stop microphone";
+              micBtn.classList.add("live");
+              micStatus.textContent = (joined && role === "controller")
+                ? "Live — your changed voice is going to the stage. You won't hear it on this iPad."
+                : "Listening — talk and watch Giggles' mouth!";
+              // if the peer connection is already up, hand it the voice track
+              if (audioSender && streamDest.stream.getAudioTracks().length) {
+                audioSender.replaceTrack(streamDest.stream.getAudioTracks()[0]).catch(function () {});
+              }
+              requestAnimationFrame(meterLoop);
+            })
+            .catch(function () {
+              micStatus.textContent = "Microphone wasn't allowed. Check the browser's mic permission, or use the typed lines below.";
+            });
+        });
+
+        /* ---------------- Firebase setup (once per device) ---------------- */
+        var LS_CFG = "lf_fb_config", LS_ROOM = "lf_room", LS_ROLE = "lf_role", LS_SKIP = "lf_skip_setup";
+        var fbReady = false, fbDb = null;
+        var setupScreen = document.getElementById("setupScreen");
+        var cfgInput = document.getElementById("cfgInput");
+        var cfgError = document.getElementById("cfgError");
+        var linkBar = document.getElementById("linkBar");
+        var linkJoinBox = document.getElementById("linkJoinBox");
+        var linkSetupBox = document.getElementById("linkSetupBox");
+        var linkStatus = document.getElementById("linkStatus");
+        var roomInput = document.getElementById("roomInput");
+
+        function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+        function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+        function forget(key) { try { localStorage.removeItem(key); } catch (e) {} }
+
+        function parseConfig(text) {
+          if (!text) return null;
+          var keys = ["apiKey", "authDomain", "databaseURL", "projectId", "storageBucket", "messagingSenderId", "appId"];
+          var cfg = {};
+          keys.forEach(function (k) {
+            var m = text.match(new RegExp(k + "\\s*:\\s*\"([^\"]+)\""));
+            if (m) cfg[k] = m[1];
+          });
+          if (cfg.apiKey && cfg.databaseURL && cfg.projectId && cfg.appId) return cfg;
+          return null;
+        }
+        function initFirebase(cfg) {
+          if (!window.firebase || !firebase.database) return false;
+          try {
+            if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(cfg);
+            fbDb = firebase.database();
+            fbReady = true;
+            return true;
+          } catch (e) { return false; }
+        }
+        function openSetup() {
+          setupScreen.hidden = false;
+          document.body.classList.add("setup-open");
+          cfgError.textContent = "";
+        }
+        function closeSetup() {
+          setupScreen.hidden = true;
+          document.body.classList.remove("setup-open");
+          refreshLinkBox();
+        }
+        document.getElementById("cfgSave").addEventListener("click", function () {
+          var cfg = parseConfig(cfgInput.value);
+          if (!cfg) {
+            cfgError.textContent = "That paste doesn't look complete — it needs apiKey, databaseURL, projectId, and appId. Copy the whole firebaseConfig block from Firebase and try again.";
+            return;
+          }
+          if (!initFirebase(cfg)) {
+            cfgError.textContent = "Firebase couldn't start — check your internet connection, then try saving again.";
+            return;
+          }
+          store(LS_CFG, JSON.stringify(cfg));
+          forget(LS_SKIP);
+          cfgInput.value = "";
+          closeSetup();
+          linkBar.hidden = false;
+          linkStatus.textContent = "Setup saved on this device. Now pick a role and join a room.";
+          updateConnUI();
+        });
+        document.getElementById("cfgSkip").addEventListener("click", function () {
+          store(LS_SKIP, "1");
+          closeSetup();
+        });
+        document.getElementById("openSetupBtn").addEventListener("click", openSetup);
+        document.getElementById("changeSetupBtn").addEventListener("click", openSetup);
+        document.getElementById("forgetBtn").addEventListener("click", function () {
+          leaveRoom();
+          forget(LS_CFG); forget(LS_ROOM); forget(LS_ROLE);
+          fbReady = false; fbDb = null;
+          refreshLinkBox();
+          updateConnUI();
+          linkStatus.textContent = "Saved Firebase settings forgotten on this device.";
+        });
+        function refreshLinkBox() {
+          linkJoinBox.hidden = !fbReady;
+          linkSetupBox.hidden = fbReady;
+        }
+
+        /* ---------------- room link: presence, commands, WebRTC voice ---------------- */
+        var role = null;               // "stage" | "controller"
+        var joined = false, joinTs = 0, roomCode = "";
+        var roomRef = null, cmdRef = null, presRef = null, rtcRef = null;
+        var myPresRef = null, otherPresRef = null, presTimer = null;
+        var otherPresent = false, dbConnected = false;
+        var pc = null, audioSender = null, pendingIce = [], myOfferTs = 0, lastOfferTs = 0;
+        var ICE = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }, { urls: "stun:stun1.l.google.com:19302" }] };
+        var connPill = document.getElementById("connPill");
+        var connText = document.getElementById("connText");
+        var stageLink = document.getElementById("stageLink");
+        var stageLinkText = document.getElementById("stageLinkText");
+        var leaveBtn = document.getElementById("leaveBtn");
+        var reconnectBtn = document.getElementById("reconnectBtn");
+
+        document.querySelectorAll("[data-role]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            role = btn.getAttribute("data-role");
+            document.querySelectorAll("[data-role]").forEach(function (b) {
+              b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+          });
+        });
+        function genCode() {
+          var chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", out = "";
+          for (var i = 0; i < 4; i++) out += chars.charAt(Math.floor(Math.random() * chars.length));
+          return out;
+        }
+        document.getElementById("genRoomBtn").addEventListener("click", function () {
+          roomInput.value = genCode();
+        });
+        document.getElementById("linkBtn").addEventListener("click", function () {
+          refreshLinkBox();
+          linkBar.hidden = !linkBar.hidden;
+          if (!linkBar.hidden) linkBar.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+
+        function sendCmd(type, data) {
+          if (!cmdRef) return;
+          var payload = { type: type, ts: Date.now() };
+          if (data) payload.data = data;
+          cmdRef.push(payload);
+        }
+        function sendItemsCmd() { sendCmd("items", { items: items }); }
+
+        function updateConnUI() {
+          var state = "off", text = "Not linked";
+          if (joined) {
+            if (otherPresent) {
+              state = "ok";
+              text = "Linked • Room " + roomCode;
+              if (role === "controller") {
+                if (pc && pc.iceConnectionState === "connected") text += micOn ? " • voice live" : " • start mic for voice";
+                else if (micOn) text += " • voice connecting…";
+              }
+            } else {
+              state = "wait";
+              text = "Room " + roomCode + " — waiting for the other device…";
+            }
+          }
+          connPill.setAttribute("data-state", state);
+          connText.textContent = text;
+          stageLink.setAttribute("data-state", state);
+          stageLinkText.textContent = text;
+          if (!linkBar.hidden && joined) {
+            linkStatus.textContent = otherPresent
+              ? "Linked! The other device is in room " + roomCode + "."
+              : "You're in room " + roomCode + " as the " + role + ". Waiting for the other device to join with the same code…";
+          }
+          leaveBtn.hidden = !joined;
+          reconnectBtn.hidden = !(joined && role === "controller");
+        }
+
+        function closePc() {
+          if (pc) { try { pc.close(); } catch (e) {} }
+          pc = null; audioSender = null; pendingIce = [];
+        }
+        function flushIce() {
+          pendingIce.forEach(function (c) { pc.addIceCandidate(c).catch(function () {}); });
+          pendingIce = [];
+        }
+        function addIce(cand) {
+          if (!pc) return;
+          var c = new RTCIceCandidate(cand);
+          if (pc.remoteDescription) { pc.addIceCandidate(c).catch(function () {}); }
+          else pendingIce.push(c);
+        }
+        function parseCand(v) {
+          try { return typeof v === "string" ? JSON.parse(v) : v; } catch (e) { return null; }
+        }
+
+        /* controller side: offer the voice connection */
+        function ctrlStartPeer() {
+          closePc();
+          if (!window.RTCPeerConnection) { updateConnUI(); return; }
+          pc = new RTCPeerConnection(ICE);
+          audioSender = pc.addTransceiver("audio", { direction: "sendonly" }).sender;
+          if (streamDest && streamDest.stream.getAudioTracks().length) {
+            audioSender.replaceTrack(streamDest.stream.getAudioTracks()[0]).catch(function () {});
+          }
+          pc.onicecandidate = function (e) {
+            if (e.candidate && rtcRef) rtcRef.child("candCtrl").push(JSON.stringify(e.candidate));
+          };
+          pc.oniceconnectionstatechange = updateConnUI;
+          rtcRef.child("candStage").on("child_added", function (snap) {
+            var c = parseCand(snap.val());
+            if (c) addIce(c);
+          });
+          rtcRef.child("answer").on("value", function (snap) {
+            var a = snap.val();
+            if (!a || !pc || a.ts < myOfferTs) return;
+            if (pc.signalingState !== "have-local-offer") return;
+            pc.setRemoteDescription(new RTCSessionDescription(a)).then(flushIce).catch(function () {});
+          });
+          makeOffer();
+        }
+        function makeOffer() {
+          if (!pc || !rtcRef) return;
+          myOfferTs = Date.now();
+          pc.createOffer().then(function (o) { return pc.setLocalDescription(o); }).then(function () {
+            rtcRef.child("offer").set({ type: pc.localDescription.type, sdp: pc.localDescription.sdp, ts: myOfferTs });
+          }).catch(function () {});
+        }
+        reconnectBtn.addEventListener("click", function () {
+          if (!joined || role !== "controller") return;
+          if (rtcRef) { rtcRef.child("answer").remove(); rtcRef.child("candCtrl").remove(); rtcRef.child("candStage").remove(); }
+          ctrlStartPeer();
+        });
+
+        /* stage side: answer, play the voice, drive the mouth from it */
+        function stageStartPeer() {
+          closePc();
+          if (!window.RTCPeerConnection) { updateConnUI(); return; }
+          pc = new RTCPeerConnection(ICE);
+          pc.onicecandidate = function (e) {
+            if (e.candidate && rtcRef) rtcRef.child("candStage").push(JSON.stringify(e.candidate));
+          };
+          pc.oniceconnectionstatechange = updateConnUI;
+          pc.ontrack = function (e) {
+            if (!e.streams || !e.streams.length) return;
+            ensureCtx();
+            var src = actx.createMediaStreamSource(e.streams[0]);
+            remoteAnalyser = actx.createAnalyser();
+            remoteAnalyser.fftSize = 512;
+            src.connect(remoteAnalyser);
+            remoteAnalyser.connect(actx.destination);
+            if (actx.state !== "running") document.getElementById("soundBtn").hidden = false;
+          };
+          rtcRef.child("candCtrl").on("child_added", function (snap) {
+            var c = parseCand(snap.val());
+            if (c) addIce(c);
+          });
+          rtcRef.child("offer").on("value", function (snap) {
+            var o = snap.val();
+            if (!o || !pc || o.ts <= lastOfferTs) return;
+            lastOfferTs = o.ts;
+            pc.setRemoteDescription(new RTCSessionDescription(o))
+              .then(function () { return pc.createAnswer(); })
+              .then(function (a) { return pc.setLocalDescription(a); })
+              .then(function () {
+                rtcRef.child("answer").set({ type: pc.localDescription.type, sdp: pc.localDescription.sdp, ts: Date.now() });
+                flushIce();
+              })
+              .catch(function () {});
+          });
+        }
+
+        /* stage side: run commands arriving from the controller */
+        function handleCmd(c) {
+          if (!c || !c.type) return;
+          var d = c.data || {};
+          switch (c.type) {
+            case "action": doAction(d.name); break;
+            case "sfx": if (SFX[d.name]) SFX[d.name](); break;
+            case "speak": speak(d.text || "", null, d.voice); break;
+            case "joke": tellJoke(); break;
+            case "voice":
+              if (d.mode && VOICE_TTS[d.mode]) {
+                voiceMode = d.mode;
+                document.querySelectorAll("[data-voice]").forEach(function (b) {
+                  b.setAttribute("aria-pressed", b.getAttribute("data-voice") === d.mode ? "true" : "false");
+                });
+              }
+              break;
+            case "items": setItems(d.items); break;
+            case "hold": holdItem(d.id); break;
+            case "putdown": putDown(); break;
+          }
+        }
+
+        function joinRoom() {
+          if (!fbReady) {
+            linkStatus.textContent = "Firebase isn't ready on this device — finish the setup first (Link devices → Firebase setup).";
+            return;
+          }
+          var code = (roomInput.value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
+          if (code.length < 4) { linkStatus.textContent = "Type the 4-character room code first (or tap New code)."; return; }
+          if (!role) { linkStatus.textContent = "First pick what this device is: Stage or Controller."; return; }
+          leaveRoom(true);
+          roomCode = code;
+          roomInput.value = code;
+          store(LS_ROOM, code); store(LS_ROLE, role);
+          joined = true; joinTs = Date.now(); otherPresent = false;
+          roomRef = fbDb.ref("rooms/" + code);
+          cmdRef = roomRef.child("cmds");
+          presRef = roomRef.child("presence");
+          rtcRef = roomRef.child("rtc");
+          // presence heartbeat
+          myPresRef = presRef.child(role);
+          otherPresRef = presRef.child(role === "stage" ? "controller" : "stage");
+          myPresRef.set(firebase.database.ServerValue.TIMESTAMP);
+          myPresRef.onDisconnect().remove();
+          presTimer = setInterval(function () {
+            myPresRef.set(firebase.database.ServerValue.TIMESTAMP);
+            otherPresent = otherPresent && (Date.now() - lastOtherSeen < 9000);
+            updateConnUI();
+          }, 3000);
+          var lastOtherSeen = 0;
+          otherPresRef.on("value", function (snap) {
+            var v = snap.val();
+            var was = otherPresent;
+            lastOtherSeen = v || 0;
+            otherPresent = !!v && (Date.now() - v < 9000);
+            if (otherPresent && !was && role === "controller") {
+              sendItemsCmd();
+              sendCmd("voice", { mode: voiceMode });
+            }
+            updateConnUI();
+          });
+          fbDb.ref(".info/connected").on("value", function (snap) {
+            dbConnected = !!snap.val();
+            updateConnUI();
+          });
+          if (role === "stage") {
+            cmdRef.on("child_added", function (snap) {
+              var c = snap.val();
+              if (!c || c.ts < joinTs - 3000) return; // skip commands from before we arrived
+              handleCmd(c);
+            });
+            stageStartPeer();
+            setView("stage");
+          } else {
+            ctrlStartPeer();
+            setView("controls");
+          }
+          updateMonitor();
+          updateConnUI();
+          linkBar.hidden = true;
+        }
+        document.getElementById("joinBtn").addEventListener("click", joinRoom);
+
+        function leaveRoom(silent) {
+          if (presTimer) { clearInterval(presTimer); presTimer = null; }
+          if (myPresRef) {
+            try { myPresRef.onDisconnect().cancel(); myPresRef.remove(); } catch (e) {}
+          }
+          [cmdRef, otherPresRef].forEach(function (r) { if (r) r.off(); });
+          if (rtcRef) { rtcRef.child("answer").off(); rtcRef.child("offer").off(); rtcRef.child("candCtrl").off(); rtcRef.child("candStage").off(); }
+          if (fbDb) fbDb.ref(".info/connected").off();
+          closePc();
+          remoteAnalyser = null;
+          joined = false; otherPresent = false;
+          roomRef = cmdRef = presRef = rtcRef = myPresRef = otherPresRef = null;
+          lastOfferTs = 0;
+          updateMonitor();
+          if (!silent) { refreshLinkBox(); updateConnUI(); }
+        }
+        leaveBtn.addEventListener("click", function () {
+          leaveRoom();
+          linkBar.hidden = false;
+          linkStatus.textContent = "You left room " + roomCode + ".";
+        });
+        window.addEventListener("beforeunload", function () {
+          if (myPresRef) { try { myPresRef.remove(); } catch (e) {} }
+        });
+
+        /* ---------------- dispatchers: send to the stage, or do it here ---------------- */
+        function isRemoteController() { return joined && role === "controller"; }
+        function dispatchAction(name) {
+          if (name === "joke") { dispatchJoke(); return; }
+          if (isRemoteController()) sendCmd("action", { name: name });
+          else doAction(name);
+        }
+        function dispatchJoke() {
+          if (isRemoteController()) sendCmd("joke", {});
+          else tellJoke();
+        }
+        function dispatchSfx(name) {
+          if (isRemoteController()) sendCmd("sfx", { name: name });
+          else if (SFX[name]) SFX[name]();
+        }
+        function dispatchSpeak(text) {
+          if (!text) return;
+          if (isRemoteController()) sendCmd("speak", { text: text, voice: voiceMode });
+          else { ensureCtx(); speak(text); }
+        }
+        function dispatchHold(id) {
+          if (isRemoteController()) {
+            if (ctrlHeldId === id) { sendCmd("putdown", {}); ctrlHeldId = null; }
+            else { sendCmd("hold", { id: id }); ctrlHeldId = id; }
+            renderItemBtns();
+          } else if (heldId === id) putDown();
+          else holdItem(id);
+        }
+
+        document.querySelectorAll("[data-action]").forEach(function (btn) {
+          btn.addEventListener("click", function () { dispatchAction(btn.getAttribute("data-action")); });
+        });
+        document.querySelectorAll("[data-sfx]").forEach(function (btn) {
+          btn.addEventListener("click", function () { dispatchSfx(btn.getAttribute("data-sfx")); });
+        });
+        document.querySelectorAll("#phraseGrid .phrase").forEach(function (btn) {
+          btn.addEventListener("click", function () { dispatchSpeak(btn.textContent.trim()); });
+        });
+        var sayInput = document.getElementById("sayInput");
+        function sayTyped() {
+          var t = sayInput.value.trim();
+          if (!t) return;
+          dispatchSpeak(t);
+          sayInput.value = "";
+        }
+        document.getElementById("sayBtn").addEventListener("click", sayTyped);
+        sayInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sayTyped(); });
+
+        document.querySelectorAll("[data-voice]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            voiceMode = btn.getAttribute("data-voice");
+            document.querySelectorAll("[data-voice]").forEach(function (b) {
+              b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+            });
+            if (micOn) buildChain();
+            if (isRemoteController()) sendCmd("voice", { mode: voiceMode });
+          });
+        });
+
+        var KEYMAP = { "1": "wave", "2": "jump", "3": "laugh", "4": "pointL", "5": "pointR", "6": "smile", "7": "dance", "8": "confused", "9": "sleepy", "0": "surprise" };
+        document.addEventListener("keydown", function (e) {
+          if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT")) return;
+          var a = KEYMAP[e.key];
+          if (a) { e.preventDefault(); dispatchAction(a); }
+        });
+
+        /* ---------------- init ---------------- */
+        (function init() {
+          // saved lesson items
+          var savedItems = read("lf_items");
+          if (savedItems) {
+            try {
+              var parsed = JSON.parse(savedItems);
+              if (parsed && parsed.length) items = parsed.filter(function (it) { return it && it.id && SHAPES[it.shape]; }).slice(0, 6);
+              if (!items.length) items = DEFAULT_ITEMS.slice();
+            } catch (e) {}
+          }
+          renderProps();
+          renderEditor();
+
+          // saved Firebase config
+          var savedCfg = read(LS_CFG);
+          var cfgOk = false;
+          if (savedCfg) {
+            try { cfgOk = initFirebase(JSON.parse(savedCfg)); } catch (e) { cfgOk = false; }
+          }
+          refreshLinkBox();
+
+          // saved room + role → rejoin automatically
+          var savedRoom = read(LS_ROOM), savedRole = read(LS_ROLE);
+          if (savedRole === "stage" || savedRole === "controller") {
+            role = savedRole;
+            document.querySelectorAll("[data-role]").forEach(function (b) {
+              b.setAttribute("aria-pressed", b.getAttribute("data-role") === role ? "true" : "false");
+            });
+          }
+          if (savedRoom) roomInput.value = savedRoom;
+          if (cfgOk && savedRoom && role) {
+            joinRoom();
+            linkStatus.textContent = "Rejoined room " + savedRoom + " from last time.";
+          } else if (!cfgOk && !read(LS_SKIP)) {
+            openSetup();
+          } else if (cfgOk) {
+            linkBar.hidden = false; // invite the teacher to join a room
+          }
+          updateConnUI();
+        })();
+
+        // greet on load
+        setTimeout(function () { showBubble("Hi! I'm Giggles!", 2800); }, 600);
+      })();
+    </script>
+  </body>
+</html>
