@@ -91,6 +91,13 @@
       }
       .cfg-error { color: #c1272d; font-weight: 800; min-height: 1.2em; margin: .4rem 0 0; font-size: .95rem; }
       .setup-btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .7rem; align-items: center; }
+      .codes-note { background: var(--accent2-soft); border: 2px solid var(--accent2); border-radius: 14px; padding: .9rem 1rem 1rem; margin: 0 0 1rem; }
+      .codes-note h3 { margin: 0 0 .55rem; font-size: 1.1rem; font-weight: 800; }
+      .codes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+      @media (max-width: 560px) { .codes-grid { grid-template-columns: 1fr; } }
+      .codes-grid h4 { margin: 0 0 .25rem; font-size: 1rem; font-weight: 800; }
+      .codes-grid p { margin: 0; font-size: .95rem; line-height: 1.5; }
+      .codes-note .codes-foot { margin: .75rem 0 0; font-size: .95rem; line-height: 1.5; font-weight: 600; }
       body.setup-open .layout, body.setup-open .linkbar { display: none; }
 
       /* ---------- link bar ---------- */
@@ -417,6 +424,20 @@
           <li>Back on the project home page, click the web icon <strong>&lt;/&gt;</strong> to add a web app, give it any nickname, and click <strong>Register app</strong>.</li>
           <li>Firebase shows a block of code with <strong>firebaseConfig</strong> in it. Copy that whole block and paste it below.</li>
         </ol>
+        <div class="codes-note" aria-label="Firebase config versus room code">
+          <h3>Two different codes — don't mix them up</h3>
+          <div class="codes-grid">
+            <div>
+              <h4>1. Firebase config — paste once per device</h4>
+              <p>This is the block below. It only tells a device <em>which</em> Firebase project to use. Paste the <strong>same exact block on every device</strong> — every classroom, every pair. It must contain <strong>apiKey, databaseURL, projectId, and appId</strong>. Pasting it does <strong>not</strong> link devices by itself.</p>
+            </div>
+            <div>
+              <h4>2. Room code — this is what pairs devices</h4>
+              <p>After saving the config, pick a role on each device (<strong>Stage</strong> on the board device, <strong>Controller</strong> on the iPad) and type the <strong>same 4-letter room code</strong> on both, then tap <strong>Join</strong>. Same code + opposite roles = linked. The green <strong>Linked • Room XXXX</strong> pill confirms it.</p>
+            </div>
+          </div>
+          <p class="codes-foot"><strong>Second classroom?</strong> You do <em>not</em> need a new Firebase project or database. Paste the same config on the new devices and give that pair a <strong>different room code</strong> (for example ABCD for pair 1, WXYZ for pair 2) — different codes keep the pairs completely separate. To re-pair later, tap <strong>Leave room</strong> on a device, type the other pair's code, and Join. No re-pasting the config.</p>
+        </div>
         <textarea id="cfgInput" rows="7" spellcheck="false" placeholder="Paste the firebaseConfig block here…"></textarea>
         <p class="cfg-error" id="cfgError" role="alert"></p>
         <div class="setup-btns">
@@ -432,6 +453,7 @@
       <div class="linkbar-inner" id="linkJoinBox">
         <h2>Link this device</h2>
         <p class="hint">Open this page on both devices, pick a role on each, and type the <strong>same room code</strong> on both. The stage device goes on the board (AirPlay it, then use Stage only + Full screen). The controller is the iPad in your hand. Commands travel through Firebase; your live voice travels directly between the two devices.</p>
+        <p class="hint"><strong>Reminder:</strong> the Firebase <em>config</em> (saved in Setup) is the same on every device and only names the project. The <em>room code</em> below is what actually pairs two devices — use a different code for each classroom pair so they don't interfere.</p>
         <div class="seg" role="group" aria-label="This device is">
           <button type="button" data-role="stage" aria-pressed="false">Stage — goes on the board</button>
           <button type="button" data-role="controller" aria-pressed="false">Controller — teacher's iPad</button>
@@ -675,6 +697,9 @@
             <li><strong>Voice:</strong> on the controller, tap <em>Start microphone</em> and allow mic access. Pick Monster, Robot, or Squeaky. Your voice comes out of the board device's speaker, changed, and Giggles' mouth follows the sound itself.</li>
             <li><strong>Lesson items:</strong> edit the list on the controller — names, pictures, and the line Giggles says. The stage picks up the changes on its own.</li>
           </ol>
+          <p><strong>Moving a device to a different room:</strong> yes — devices aren't locked to a pairing. Tap <em>Link devices → Leave room</em> on the device you want to move, type the other pair's room code, and tap <em>Join room</em>. Example: pairs 1↔2 and 3↔4 are set up, device 1 stops working — leave the room on device 3, join device 2's room code, and 3 now controls (or displays for) 2. Device 4 is untouched. No new Firebase setup and no re-pasting the config.</p>
+          <p><strong>One controller iPad for two teachers:</strong> that works, as long as only one stage is open at a time. Put the controller and both teachers' stage devices in the <em>same</em> room code. Use the controller with Teacher 1 while Teacher 2's Laugh Floor page is closed — no conflict, because a closed page isn't listening. When you're done, have Teacher 1 close her page, walk to Teacher 2, have her open hers, and the same controller now drives Teacher 2. If both stage pages were open at once, <em>both</em> would respond to every tap — so keep only the room you're in open.</p>
+          <p><strong>Trying it at home first:</strong> yes — create the Firebase project at home while signed in with your school Google account (jgirshovich@stanneschool.net), paste the config on your iPad (Controller) and MacBook (Stage) at home, and test there. That same project and the same saved config work at school with no changes — Firebase lives on the web, not on your home network. Just open the same page link at school and join the same room code.</p>
           <p><strong>Seeing the class:</strong> for the first run, use a Google Meet call. Put a spare iPad near the board facing the students, join the Meet from it and from your controller iPad, then on the board iPad turn the volume all the way down and the brightness all the way down (or face it away) so the class sees and hears nothing from it. There's no camera built into this page yet — Meet is the stand-in while we test the link.</p>
           <p><strong>If the pill stays yellow:</strong> the two devices can see Firebase but not each other yet — give it a few seconds, confirm both typed the same room code, and check both picked different roles. If buttons work but the live voice won't connect, the school network may be blocking direct device-to-device audio; the moves, jokes, items, and typed lines still work, and the typed lines become the voice for that lesson.</p>
           <p><strong>Keyboard shortcuts</strong> (handy on a MacBook controller): <kbd>1</kbd> wave, <kbd>2</kbd> jump, <kbd>3</kbd> laugh, <kbd>4</kbd>/<kbd>5</kbd> point, <kbd>6</kbd> smile, <kbd>7</kbd> dance, <kbd>8</kbd> confused, <kbd>9</kbd> sleepy, <kbd>0</kbd> surprise.</p>
